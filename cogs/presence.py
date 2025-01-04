@@ -21,8 +21,6 @@ class Presence(commands.Cog):
         - `!startPresence` : Inicia a presença.
         - `!endPresence` : Finaliza a presença.
         - `!listPresence` : Lista os usuários que marcaram presença.
-        - `!exportPresenceExcel` : Exporta a lista de presença em Excel.
-        - `!exportPresenceJson` : Exporta a lista de presença em JSON.
         - `!savePresence` : Salva a lista de presença no banco.
         - `!listWeekPresence` : Lista as presenças da última semana.
         - `!listMonthPresence` : Lista as presenças do último mês.
