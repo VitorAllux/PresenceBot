@@ -1,5 +1,7 @@
 from discord.ext import commands
+from io import BytesIO
 import discord
+import pandas
 
 
 class Presence(commands.Cog):
@@ -164,6 +166,40 @@ class Presence(commands.Cog):
             await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
+
+    @commands.command(name="exportPresenceByMonth")
+    async def export_presence_by_month(self, ctx):
+        await ctx.message.delete()
+
+        loading_message = await ctx.send("🤖 `BOT`: Gerando relatório de presença por mês... ⏳")
+        try:
+            all_presences = await self.storage.get_all_presences()
+
+            if not all_presences:
+                await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença encontrada no banco de dados.```")
+                return
+
+            data = {
+                "Ano": [presence["timestamp"].year for presence in all_presences],
+                "Mês": [presence["timestamp"].month for presence in all_presences],
+                "Usuário": [presence["participant"] for presence in all_presences],
+            }
+            df = pd.DataFrame(data)
+
+            summary = df.groupby(["Ano", "Mês", "Usuário"]).size().reset_index(name="Presenças")
+
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine="xlsxwriter") as writer:
+                summary.to_excel(writer, index=False, sheet_name="Presença Mensal")
+            excel_buffer.seek(0)
+
+            await loading_message.delete()
+            await ctx.send(
+                "🤖 `BOT`: ```Relatório de presença por mês gerado com sucesso!```",
+                file=discord.File(excel_buffer, filename="presenca_por_mes.xlsx"),
+            )
+        except Exception as e:
+            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao gerar relatório: {e}```")
 
 async def setup(bot):
     from services.storage import Storage

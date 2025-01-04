@@ -33,3 +33,18 @@ class Storage:
                     {"id": row["id"], "timestamp": row["timestamp"], "participant": row["participant"]}
                     for row in rows
                 ]
+            
+    async def get_all_presences(self):
+        query = """
+        SELECT id, timestamp, participant
+        FROM public.presences
+        ORDER BY timestamp ASC;
+        """
+        async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(query)
+                return [
+                    {"id": row["id"], "timestamp": row["timestamp"], "participant": row["participant"]}
+                    for row in rows
+                ]
+
