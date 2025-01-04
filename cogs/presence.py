@@ -48,7 +48,7 @@ class Presence(commands.Cog):
             await ctx.send("Nenhum usuário marcou presença.")
             return
 
-        timestamp = discord.utils.format_dt(discord.utils.utcnow(), style="f")
+        timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S")
 
         header = f"{'Nome do Usuário':<25} {'✅ Presença'}\n{'-'*40}\n"
         user_list = "\n".join([f"👤 {user:<25}" for user in sorted(self.users_marked)])
@@ -59,6 +59,8 @@ class Presence(commands.Cog):
 
     @commands.command(name="exportPresenceExcel")
     async def export_presence(self, ctx):
+        await ctx.message.delete()
+
         if not self.users_marked:
             await ctx.send("Nenhum usuário marcou presença.")
             return
@@ -76,6 +78,8 @@ class Presence(commands.Cog):
 
     @commands.command(name="exportPresenceJson")
     async def export_presence_json(self, ctx):
+        await ctx.message.delete()
+
         if not self.users_marked:
             await ctx.send("Nenhum usuário marcou presença.")
             return
@@ -106,3 +110,4 @@ class Presence(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Presence(bot))
+
