@@ -1,8 +1,8 @@
 from discord.ext import commands
 from io import BytesIO
 import discord
-import pandas
-
+import pandas as pd
+from io import BytesIO
 
 class Presence(commands.Cog):
     def __init__(self, bot, storage):
@@ -26,6 +26,7 @@ class Presence(commands.Cog):
         - `!savePresence` : Salva a lista de presença no banco.
         - `!listWeekPresence` : Lista as presenças da última semana.
         - `!listMonthPresence` : Lista as presenças do último mês.
+        - `!exportPresenceByMonth` : Exporta a lista de presença por mês.
         ```
         """
         await loading_message.edit(content=help_text)
