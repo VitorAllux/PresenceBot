@@ -12,7 +12,7 @@ class Storage:
         INSERT INTO public.presences (timestamp, participant)
         VALUES ($1, $2);
         """
-        async with asyncpg.create_pool(self.db_url) as pool:
+        async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
             async with pool.acquire() as conn:
                 for participant in participants:
                     await conn.execute(insert_query, timestamp, participant)
@@ -25,7 +25,7 @@ class Storage:
         WHERE timestamp >= $1
         ORDER BY timestamp DESC;
         """
-        async with asyncpg.create_pool(self.db_url) as pool:
+        async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
             async with pool.acquire() as conn:
                 rows = await conn.fetch(select_query, one_week_ago)
                 return [
