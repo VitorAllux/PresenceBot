@@ -7,7 +7,7 @@ class Storage:
         self.db_url = os.getenv("DATABASE_URL")
 
     async def save_presence(self, participants):
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.utcnow()
         insert_query = """
         INSERT INTO public.presences (timestamp, participant)
         VALUES ($1, $2);
@@ -18,7 +18,7 @@ class Storage:
                     await conn.execute(insert_query, timestamp, participant)
 
     async def get_presences_last_week(self):
-        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        one_week_ago = datetime.utcnow()
         select_query = """
         SELECT id, timestamp, participant
         FROM public.presences

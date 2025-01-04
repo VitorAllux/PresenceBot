@@ -80,18 +80,24 @@ class Presence(commands.Cog):
     @commands.command(name="listWeekPresence")
     async def list_week_presence(self, ctx):
         await ctx.message.delete()
-        recent_presences = await self.storage.get_presences_last_week()
-        if not recent_presences:
-            await ctx.send("Nenhuma presença registrada nos últimos 7 dias.")
-            return
-        participant_counts = {}
-        for presence in recent_presences:
-            participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
-        sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
-        report = "Presenças na última semana:\n"
-        for participant, count in sorted_participants:
-            report += f"👤 {participant}: {count} presenças\n"
-        await ctx.send(f"```\n{report}```")
+        try:
+            recent_presences = await self.storage.get_presences_last_week()
+            if not recent_presences:
+                await ctx.send("Nenhuma presença registrada nos últimos 7 dias.")
+                return
+
+            participant_counts = {}
+            for presence in recent_presences:
+                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
+
+            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+            report = "Presenças na última semana:\n"
+            for participant, count in sorted_participants:
+                report += f"👤 {participant}: {count} presenças\n"
+            
+            await ctx.send(f"```\n{report}```")
+        except Exception as e:
+            await ctx.send(f"Erro ao listar presenças: {e}")
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
