@@ -1,5 +1,5 @@
 from discord.ext import commands
-from storage import Storage
+from cogs.storage import Storage
 import pandas as pd
 import discord
 import json
