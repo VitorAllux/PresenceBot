@@ -1,7 +1,5 @@
 from discord.ext import commands
-import pandas as pd
 import discord
-import json
 
 
 class Presence(commands.Cog):
@@ -97,55 +95,6 @@ class Presence(commands.Cog):
         panel = f"```{header}{user_list}```"
         await ctx.send(f"🤖 `BOT`: {panel}")
 
-    @commands.command(name="listWeekPresence")
-    async def list_week_presence(self, ctx):
-        await ctx.message.delete()
-
-        loading_message = await ctx.send("🤖 `BOT`: Buscando presenças da última semana... ⏳")
-        try:
-            recent_presences = await self.storage.get_presences_last_week()
-
-            if not recent_presences:
-                await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença registrada nos últimos 7 dias.```")
-                return
-
-            participant_counts = {}
-            for presence in recent_presences:
-                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
-
-            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
-            report = "Presenças na última semana:\n"
-            for participant, count in sorted_participants:
-                report += f"👤 {participant}: {count} presenças\n"
-
-            await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
-        except Exception as e:
-            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
-
-    @commands.command(name="listMonthPresence")
-    async def list_month_presence(self, ctx):
-        await ctx.message.delete()
-        loading_message = await ctx.send("🤖 `BOT`: Buscando presenças do último mês... ⏳")
-        try:
-            recent_presences = await self.storage.get_presences_last_month()
-
-            if not recent_presences:
-                await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença registrada no último mês.```")
-                return
-
-            participant_counts = {}
-            for presence in recent_presences:
-                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
-
-            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
-            report = "Presenças no último mês:\n"
-            for participant, count in sorted_participants:
-                report += f"👤 {participant}: {count} presenças\n"
-
-            await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
-        except Exception as e:
-            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
-
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         if user.bot:
@@ -168,6 +117,6 @@ class Presence(commands.Cog):
 
 
 async def setup(bot):
-    from cogs.storage import Storage
+    from services.storage import Storage
     storage = Storage()
     await bot.add_cog(Presence(bot, storage))
