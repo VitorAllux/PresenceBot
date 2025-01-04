@@ -90,6 +90,25 @@ class Presence(commands.Cog):
             report += f"👤 {participant}: {count} presenças\n"
         await ctx.send(f"```\n{report}```")
 
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        if user.bot:
+            return
+        if reaction.message.id == self.presence_message and reaction.emoji == "✅":
+            guild_member = reaction.message.guild.get_member(user.id)
+            if guild_member:
+                self.users_marked.add(guild_member.display_name)
+
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        if user.bot:
+            return
+        if reaction.message.id == self.presence_message and reaction.emoji == "✅":
+            guild_member = reaction.message.guild.get_member(user.id)
+            if guild_member:
+                self.users_marked.discard(guild_member.display_name)
+
+
 async def setup(bot):
     from cogs.storage import Storage
     storage = Storage()
