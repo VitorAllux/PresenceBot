@@ -65,7 +65,7 @@ class Presence(commands.Cog):
             await ctx.send("Nenhum usuário marcou presença.")
             return
 
-        timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S")
+        timestamp = 'coming soon'
 
         header = f"{'Nome do Usuário':<25} {'✅ Presença'}\n{'-'*40}\n"
         user_list = "\n".join([f"👤 {user:<25}" for user in sorted(self.users_marked)])
