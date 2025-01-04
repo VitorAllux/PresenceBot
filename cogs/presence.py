@@ -7,7 +7,7 @@ class Presence(commands.Cog):
         self.bot = bot
         self.presence_message = None
         self.users_marked = set()
-        self.storage = PresenceStorage()
+        self.storage = Storage()
 
     @commands.command(name="helpPresence")
     async def help_command(self, ctx):
