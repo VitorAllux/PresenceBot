@@ -1,38 +1,44 @@
-import asyncpg
-import os
+import json
 from datetime import datetime, timedelta
 
 class Storage:
+    DATA_FILE = "data.json"
+
     def __init__(self):
-        self.db_url = os.getenv("DATABASE_URL")
+        self._initialize_data_file()
 
-    async def save_presence(self, participants):
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        insert_query = """
-        INSERT INTO public.presences (timestamp, participant)
-        VALUES ($1, $2);
-        """
-        async with asyncpg.create_pool(self.db_url) as pool:
-            async with pool.acquire() as conn:
-                for participant in participants:
-                    await conn.execute(insert_query, timestamp, participant)
+    def _initialize_data_file(self):
+        try:
+            with open(self.DATA_FILE, "r") as file:
+                json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            with open(self.DATA_FILE, "w", encoding="utf-8") as file:
+                json.dump({"presences": []}, file)
 
-    async def get_presences_last_week(self):
+    def _save_to_file(self, data):
+        with open(self.DATA_FILE, "w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+
+    def _load_from_file(self):
+        with open(self.DATA_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+
+    def save_presence(self, participants):
+        data = self._load_from_file()
+        presence_record = {
+            "id": len(data["presences"]) + 1,
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            "participants": participants,
+        }
+        data["presences"].append(presence_record)
+        self._save_to_file(data)
+
+    def get_presences_last_week(self):
+        data = self._load_from_file()
         one_week_ago = datetime.utcnow() - timedelta(days=7)
-        select_query = """
-        SELECT id, timestamp, participant
-        FROM public.presences
-        WHERE timestamp >= $1
-        ORDER BY timestamp DESC;
-        """
-        async with asyncpg.create_pool(self.db_url) as pool:
-            async with pool.acquire() as conn:
-                rows = await conn.fetch(select_query, one_week_ago)
-                return [
-                    {
-                        "id": row["id"],
-                        "timestamp": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
-                        "participant": row["participant"],
-                    }
-                    for row in rows
-                ]
+        recent_presences = [
+            presence
+            for presence in data["presences"]
+            if datetime.strptime(presence["timestamp"], "%Y-%m-%d %H:%M:%S") >= one_week_ago
+        ]
+        return recent_presences
