@@ -2,6 +2,7 @@ import asyncpg
 import os
 from datetime import datetime, timedelta
 
+
 class Storage:
     def __init__(self):
         self.db_url = os.getenv("DATABASE_URL")
@@ -12,6 +13,7 @@ class Storage:
         INSERT INTO public.presences (timestamp, participant)
         VALUES ($1, $2);
         """
+
         async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
             async with pool.acquire() as conn:
                 for participant in participants:
@@ -25,9 +27,31 @@ class Storage:
         WHERE timestamp >= $1
         ORDER BY timestamp DESC;
         """
+
         async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
             async with pool.acquire() as conn:
                 rows = await conn.fetch(select_query, one_week_ago)
+                return [
+                    {
+                        "id": row["id"],
+                        "timestamp": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        "participant": row["participant"],
+                    }
+                    for row in rows
+                ]
+
+    async def get_presences_last_month(self):
+        one_month_ago = datetime.utcnow() - timedelta(days=30)
+        select_query = """
+        SELECT id, timestamp, participant
+        FROM public.presences
+        WHERE timestamp >= $1
+        ORDER BY timestamp DESC;
+        """
+
+        async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(select_query, one_month_ago)
                 return [
                     {
                         "id": row["id"],
