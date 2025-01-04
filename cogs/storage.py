@@ -18,7 +18,7 @@ class Storage:
                     await conn.execute(insert_query, timestamp, participant)
 
     async def get_presences_last_week(self):
-        one_week_ago = datetime.utcnow()
+        one_week_ago = datetime.utcnow() - timedelta(days=7)
         select_query = """
         SELECT id, timestamp, participant
         FROM public.presences
@@ -31,7 +31,7 @@ class Storage:
                 return [
                     {
                         "id": row["id"],
-                        "timestamp": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
+                        "timestamp": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S.%f"),
                         "participant": row["participant"],
                     }
                     for row in rows
