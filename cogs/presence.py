@@ -1,7 +1,7 @@
 from discord.ext import commands
+from storage import Storage
 import pandas as pd
 import discord
-from storage import Storage
 import json
 class Presence(commands.Cog):
     def __init__(self, bot):
