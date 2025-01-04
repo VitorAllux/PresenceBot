@@ -1,7 +1,7 @@
 from discord.ext import commands
 import pandas as pd
 import discord
-
+import json
 class Presence(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -48,12 +48,47 @@ class Presence(commands.Cog):
             await ctx.send("Nenhum usuário marcou presença.")
             return
 
-        # Cabeçalho e lista formatados
+        timestamp = discord.utils.format_dt(discord.utils.utcnow(), style="f")
+
         header = f"{'Nome do Usuário':<25} {'✅ Presença'}\n{'-'*40}\n"
         user_list = "\n".join([f"👤 {user:<25}" for user in sorted(self.users_marked)])
-        panel = f"```\n{header}{user_list}\n```"
+        panel = f"```\n{header}{user_list}\n\nRegistrado em: {timestamp}```"
 
         await ctx.send(panel)
+
+
+    @commands.command(name="exportPresenceExcel")
+    async def export_presence(self, ctx):
+        if not self.users_marked:
+            await ctx.send("Nenhum usuário marcou presença.")
+            return
+
+        timestamp = discord.utils.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+        file_path = f"presenca_{timestamp}.xlsx"
+
+        data = {"Nome do Usuário": list(self.users_marked)}
+        df = pd.DataFrame(data)
+
+        df.to_excel(file_path, index=False)
+
+        await ctx.send("Lista de presença exportada com sucesso!", file=discord.File(file_path))
+
+
+    @commands.command(name="exportPresenceJson")
+    async def export_presence_json(self, ctx):
+        if not self.users_marked:
+            await ctx.send("Nenhum usuário marcou presença.")
+            return
+
+        data = {"presenca": [{"nome": user} for user in self.users_marked]}
+
+        timestamp = discord.utils.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+        file_path = f"presenca_{timestamp}.json"
+
+        with open(file_path, "w", encoding="utf-8") as json_file:
+            json.dump(data, json_file, ensure_ascii=False, indent=4)
+
+        await ctx.send("Lista de presença exportada com sucesso em JSON!", file=discord.File(file_path))
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -68,21 +103,6 @@ class Presence(commands.Cog):
             guild_member = reaction.message.guild.get_member(user.id)
             if guild_member:
                 self.users_marked.discard(guild_member.display_name)
-
-    @commands.command(name="exportPresence")
-    async def export_presence(self, ctx):
-        if not self.users_marked:
-            await ctx.send("Nenhum usuário marcou presença.")
-            return
-
-        data = {"Nome do Usuário": list(self.users_marked)}
-        df = pd.DataFrame(data)
-        file_path = "presenca.xlsx"
-
-        df.to_excel(file_path, index=False)
-
-        await ctx.send("Lista de presença exportada com sucesso!", file=discord.File(file_path))
-
 
 async def setup(bot):
     await bot.add_cog(Presence(bot))
