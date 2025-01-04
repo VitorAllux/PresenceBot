@@ -115,6 +115,55 @@ class Presence(commands.Cog):
             if guild_member:
                 self.users_marked.discard(guild_member.display_name)
 
+    @commands.command(name="listWeekPresence")
+    async def list_week_presence(self, ctx):
+        await ctx.message.delete()
+
+        loading_message = await ctx.send("🤖 `BOT`: Buscando presenças da última semana... ⏳")
+        try:
+            recent_presences = await self.storage.get_presences(7)
+
+            if not recent_presences:
+                await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença registrada nos últimos 7 dias.```")
+                return
+
+            participant_counts = {}
+            for presence in recent_presences:
+                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
+
+            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+            report = "Presenças na última semana:\n"
+            for participant, count in sorted_participants:
+                report += f"👤 {participant}: {count} presenças\n"
+
+            await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
+        except Exception as e:
+            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
+
+    @commands.command(name="listMonthPresence")
+    async def list_month_presence(self, ctx):
+        await ctx.message.delete()
+
+        loading_message = await ctx.send("🤖 `BOT`: Buscando presenças do último mês... ⏳")
+        try:
+            recent_presences = await self.storage.get_presences(30)
+
+            if not recent_presences:
+                await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença registrada no último mês.```")
+                return
+
+            participant_counts = {}
+            for presence in recent_presences:
+                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
+
+            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+            report = "Presenças no último mês:\n"
+            for participant, count in sorted_participants:
+                report += f"👤 {participant}: {count} presenças\n"
+
+            await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
+        except Exception as e:
+            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
 
 async def setup(bot):
     from services.storage import Storage
