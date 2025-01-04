@@ -141,6 +141,27 @@ class Presence(commands.Cog):
             if guild_member:
                 self.users_marked.discard(guild_member.display_name)
 
+    @commands.command(name="listWeekPresence")
+    async def list_week_presence(self, ctx):
+        await ctx.message.delete()
+
+        recent_presences = self.storage.get_presences_last_week()
+
+        if not recent_presences:
+            await ctx.send("Nenhuma presença registrada nos últimos 7 dias.")
+            return
+
+        participant_counts = {}
+        for presence in recent_presences:
+            for participant in presence["participants"]:
+                participant_counts[participant] = participant_counts.get(participant, 0) + 1
+
+        report = "Presenças na última semana:\n"
+        for participant, count in participant_counts.items():
+            report += f"👤 {participant}: {count} presenças\n"
+
+        await ctx.send(f"```\n{report}```")
+        
 async def setup(bot):
     await bot.add_cog(Presence(bot))
 
