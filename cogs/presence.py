@@ -7,6 +7,7 @@ class Presence(commands.Cog):
         self.bot = bot
         self.presence_message = None
         self.users_marked = set()
+        self.storage = PresenceStorage()
 
     @commands.command(name="helpPresence")
     async def help_command(self, ctx):
@@ -24,6 +25,22 @@ class Presence(commands.Cog):
             `!listMonthPresence` - Lista a presença do mês (Coming).
         """
         await ctx.send(help_text)
+
+    @commands.command(name="savePresence")
+    async def save_presence(self, ctx):
+        await ctx.message.delete()
+
+        if not self.presence_message:
+            await ctx.send("Nenhuma presença está em andamento para salvar.")
+            return
+
+        if not self.users_marked:
+            await ctx.send("Nenhum usuário marcou presença para salvar.")
+            return
+
+        self.storage.save_presence(list(self.users_marked))
+
+        await ctx.send("Presença salva com sucesso!")
 
     @commands.command(name="startPresence")
     async def start_presence(self, ctx):
@@ -65,11 +82,9 @@ class Presence(commands.Cog):
             await ctx.send("Nenhum usuário marcou presença.")
             return
 
-        timestamp = 'coming soon'
-
         header = f"{'Nome do Usuário':<25} {'✅ Presença'}\n{'-'*40}\n"
         user_list = "\n".join([f"👤 {user:<25}" for user in sorted(self.users_marked)])
-        panel = f"```\n{header}{user_list}\n\nRegistrado em: {timestamp}```"
+        panel = f"```\n{header}{user_list}```"
 
         await ctx.send(panel)
 
