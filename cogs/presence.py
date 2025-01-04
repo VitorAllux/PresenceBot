@@ -9,7 +9,7 @@ class Presence(commands.Cog):
         self.users_marked = set()
 
     @commands.command(name="helpPresence")
-    async def help_command(ctx):
+    async def help_command(self, ctx):
         await ctx.message.delete()
 
         help_text = """
