@@ -2,9 +2,6 @@ from discord.ext import commands
 import pandas as pd
 import discord
 import json
-import logging
-
-logging.basicConfig(level=logging.INFO)
 
 class Presence(commands.Cog):
     def __init__(self, bot, storage):
@@ -37,12 +34,8 @@ class Presence(commands.Cog):
         if not self.users_marked:
             await ctx.send("Nenhum usuário marcou presença para salvar.")
             return
-        try:
-            await self.storage.save_presence(list(self.users_marked))
-            await ctx.send("Presença salva com sucesso!")
-        except Exception as e:
-            logging.error(f"Erro ao salvar presença: {e}")
-            await ctx.send("Erro ao salvar presença.")
+        await self.storage.save_presence(list(self.users_marked))
+        await ctx.send("Presença salva com sucesso!")
 
     @commands.command(name="startPresence")
     async def start_presence(self, ctx):
@@ -61,15 +54,11 @@ class Presence(commands.Cog):
         if not self.presence_message:
             await ctx.send("Nenhuma presença está em andamento.")
             return
-        try:
-            message = await ctx.channel.fetch_message(self.presence_message)
-            await message.delete()
-            self.presence_message = None
-            self.users_marked.clear()
-            await ctx.send("Presença finalizada com sucesso.")
-        except Exception as e:
-            logging.error(f"Erro ao finalizar presença: {e}")
-            await ctx.send("Erro ao finalizar presença.")
+        message = await ctx.channel.fetch_message(self.presence_message)
+        await message.delete()
+        self.presence_message = None
+        self.users_marked.clear()
+        await ctx.send("Presença finalizada com sucesso.")
 
     @commands.command(name="listPresence")
     async def list_presence(self, ctx):
@@ -88,22 +77,18 @@ class Presence(commands.Cog):
     @commands.command(name="listWeekPresence")
     async def list_week_presence(self, ctx):
         await ctx.message.delete()
-        try:
-            recent_presences = await self.storage.get_presences_last_week()
-            if not recent_presences:
-                await ctx.send("Nenhuma presença registrada nos últimos 7 dias.")
-                return
-            participant_counts = {}
-            for presence in recent_presences:
-                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
-            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
-            report = "Presenças na última semana:\n"
-            for participant, count in sorted_participants:
-                report += f"👤 {participant}: {count} presenças\n"
-            await ctx.send(f"```\n{report}```")
-        except Exception as e:
-            logging.error(f"Erro ao listar presenças: {e}")
-            await ctx.send("Erro ao listar presenças.")
+        recent_presences = await self.storage.get_presences_last_week()
+        if not recent_presences:
+            await ctx.send("Nenhuma presença registrada nos últimos 7 dias.")
+            return
+        participant_counts = {}
+        for presence in recent_presences:
+            participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
+        sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+        report = "Presenças na última semana:\n"
+        for participant, count in sorted_participants:
+            report += f"👤 {participant}: {count} presenças\n"
+        await ctx.send(f"```\n{report}```")
 
 async def setup(bot):
     from cogs.storage import Storage
