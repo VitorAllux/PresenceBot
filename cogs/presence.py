@@ -8,6 +8,20 @@ class Presence(commands.Cog):
         self.presence_message = None
         self.users_marked = set()
 
+    @commands.command(name="helpPresence")
+    async def help_command(ctx):
+        help_text = """
+        **Comandos de presença:**
+        `!startPresence` - Inicia a presença.
+        `!endPresence` - Finaliza a presença.
+        `!listPresence` - Lista os usuários que marcaram presença.
+        `!exportPresenceExcel` - Exporta a lista de presença em Excel.
+        `!exportPresenceJson` - Exporta a lista de presença em JSON.
+        `!savePresence` - Salva a lista de presença em um arquivo (Coming).
+        `!listWeekPresence` - Lista a presença da semana (Coming).
+        `!listMonthPresence` - Lista a presença do mês (Coming).
+        """
+
     @commands.command(name="startPresence")
     async def start_presence(self, ctx):
         await ctx.message.delete()
