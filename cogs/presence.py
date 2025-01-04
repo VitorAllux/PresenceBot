@@ -34,8 +34,11 @@ class Presence(commands.Cog):
         if not self.users_marked:
             await ctx.send("Nenhum usuário marcou presença para salvar.")
             return
-        await self.storage.save_presence(list(self.users_marked))
-        await ctx.send("Presença salva com sucesso!")
+        try:
+            await self.storage.save_presence(list(self.users_marked))
+            await ctx.send("Presença salva com sucesso!")
+        except Exception as e:
+            await ctx.send(f"Erro ao salvar presença: {e}")
 
     @commands.command(name="startPresence")
     async def start_presence(self, ctx):
