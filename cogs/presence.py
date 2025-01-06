@@ -2,7 +2,15 @@ from discord.ext import commands
 from io import BytesIO
 import discord
 import pandas as pd
-from io import BytesIO
+import uuid
+
+def has_permissions():
+    async def predicate(ctx):
+        if ctx.author.guild_permissions.manage_channels or ctx.author.guild_permissions.administrator:
+            return True
+        await ctx.send("🤖 `BOT`: Você não tem permissão para usar este comando.")
+        return False
+    return commands.check(predicate)
 
 class Presence(commands.Cog):
     def __init__(self, bot, storage):
@@ -12,6 +20,7 @@ class Presence(commands.Cog):
         self.storage = storage
 
     @commands.command(name="helpPresence")
+    @has_permissions()
     async def help_command(self, ctx):
         await ctx.message.delete()
         loading_message = await ctx.send("🤖 `BOT`: Carregando... ⏳")
@@ -30,6 +39,7 @@ class Presence(commands.Cog):
         await loading_message.edit(content=help_text)
 
     @commands.command(name="savePresence")
+    @has_permissions()
     async def save_presence(self, ctx):
         await ctx.message.delete()
 
@@ -43,12 +53,30 @@ class Presence(commands.Cog):
 
         loading_message = await ctx.send("🤖 `BOT`: Salvando presenças no banco de dados... ⏳")
         try:
-            await self.storage.save_presence(list(self.users_marked))
-            await loading_message.edit(content="🤖 `BOT`: ```Presença salva com sucesso!```")
+            code = str(uuid.uuid4())[:8]
+            session_id = await self.storage.create_session(code)
+            await self.storage.save_users(session_id, list(self.users_marked))
+            await loading_message.edit(content=f"🤖 `BOT`: ```Presença salva com sucesso! Código: {code}```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao salvar presença: {e}```")
 
+    @commands.command(name="revertPresence")
+    @has_permissions()
+    async def revert_presence(self, ctx, code: str):
+        await ctx.message.delete()
+
+        loading_message = await ctx.send(f"🤖 `BOT`: Revertendo presença com código {code}... ⏳")
+        try:
+            deleted = await self.storage.delete_session(code)
+            if deleted:
+                await loading_message.edit(content=f"🤖 `BOT`: ```Presença com código {code} revertida com sucesso.```")
+            else:
+                await loading_message.edit(content=f"🤖 `BOT`: ```Código {code} não encontrado.```")
+        except Exception as e:
+            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao reverter presença: {e}```")
+
     @commands.command(name="startPresence")
+    @has_permissions()
     async def start_presence(self, ctx):
         await ctx.message.delete()
 
@@ -62,6 +90,7 @@ class Presence(commands.Cog):
         self.users_marked.clear()
 
     @commands.command(name="endPresence")
+    @has_permissions()
     async def end_presence(self, ctx):
         await ctx.message.delete()
 
@@ -80,6 +109,7 @@ class Presence(commands.Cog):
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao finalizar presença: {e}```")
 
     @commands.command(name="listPresence")
+    @has_permissions()
     async def list_presence(self, ctx):
         await ctx.message.delete()
 
@@ -117,6 +147,7 @@ class Presence(commands.Cog):
                 self.users_marked.discard(guild_member.display_name)
 
     @commands.command(name="listWeekPresence")
+    @has_permissions()
     async def list_week_presence(self, ctx):
         await ctx.message.delete()
 
@@ -142,6 +173,7 @@ class Presence(commands.Cog):
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
 
     @commands.command(name="listMonthPresence")
+    @has_permissions()
     async def list_month_presence(self, ctx):
         await ctx.message.delete()
 
@@ -167,6 +199,7 @@ class Presence(commands.Cog):
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
 
     @commands.command(name="exportPresenceByMonth")
+    @has_permissions()
     async def export_presence_by_month(self, ctx):
         await ctx.message.delete()
 
