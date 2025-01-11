@@ -17,7 +17,7 @@ class Storage:
             async with pool.acquire() as conn:
                 for participant in participants:
                     await conn.execute(query, timestamp, participant)
-                    
+
     async def get_users_to_adjust(self, max_id):
         query = """
         SELECT id, participant
@@ -28,6 +28,16 @@ class Storage:
             async with pool.acquire() as conn:
                 rows = await conn.fetch(query, max_id)
                 return [{"id": row["id"], "participant": row["participant"]} for row in rows]
+            
+    async def update_user_name(self, user_id, new_name):
+        query = """
+        UPDATE public.presences
+        SET participant = $1
+        WHERE id = $2;
+        """
+        async with asyncpg.create_pool(self.db_url, min_size=1, max_size=10) as pool:
+            async with pool.acquire() as conn:
+                await conn.execute(query, new_name, user_id)
 
 
     async def get_presences(self, days):
