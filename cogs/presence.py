@@ -73,11 +73,15 @@ class Presence(commands.Cog):
         try:
             message = await ctx.channel.fetch_message(self.presence_message)
             await message.delete()
-            self.presence_message = None
-            self.users_marked.clear()
-            await loading_message.edit(content="🤖 `BOT`: ```Presença finalizada com sucesso.```")
+        except discord.NotFound:
+            await loading_message.edit(content="🤖 `BOT`: ```Mensagem de presença não encontrada. Finalizando mesmo assim.```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao finalizar presença: {e}```")
+            return
+
+        self.presence_message = None
+        self.users_marked.clear()
+        await loading_message.edit(content="🤖 `BOT`: ```Presença finalizada com sucesso.```")
 
     @commands.command(name="listPresence")
     async def list_presence(self, ctx):
