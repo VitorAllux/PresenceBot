@@ -227,41 +227,42 @@ class Presence(commands.Cog):
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao gerar relatório: {e}```")
 
-@commands.command(name="adjustUsers")
-async def adjust_users(self, ctx):
-    await ctx.message.delete()
 
-    loading_message = await ctx.send("🤖 `BOT`: Ajustando nomes de usuários no banco... ⏳")
-    try:
-        # Obtenha os registros do banco com ID < 56
-        users_to_adjust = await self.storage.get_users_to_adjust(56)
+    @commands.command(name="adjustUsers")
+    async def adjust_users(self, ctx):
+        await ctx.message.delete()
 
-        if not users_to_adjust:
-            await loading_message.edit(content="🤖 `BOT`: ```Nenhum usuário encontrado para ajuste.```")
-            return
+        loading_message = await ctx.send("🤖 `BOT`: Ajustando nomes de usuários no banco... ⏳")
+        try:
+            # Obtenha os registros do banco com ID < 56
+            users_to_adjust = await self.storage.get_users_to_adjust(56)
 
-        guild_members = {member.display_name: member.name for member in ctx.guild.members}
-        not_found = []
+            if not users_to_adjust:
+                await loading_message.edit(content="🤖 `BOT`: ```Nenhum usuário encontrado para ajuste.```")
+                return
 
-        for user in users_to_adjust:
-            current_name = user["participant"]
-            user_id = user["id"]
-            new_name = guild_members.get(current_name)
+            guild_members = {member.display_name: member.name for member in ctx.guild.members}
+            not_found = []
 
-            if new_name:
-                # Atualiza o nome no banco
-                await self.storage.update_user_name(user_id, new_name)
-            else:
-                not_found.append(current_name)
+            for user in users_to_adjust:
+                current_name = user["participant"]
+                user_id = user["id"]
+                new_name = guild_members.get(current_name)
 
-        await loading_message.edit(content="🤖 `BOT`: ```Ajustes concluídos. Verifique os usuários não encontrados.```")
+                if new_name:
+                    # Atualiza o nome no banco
+                    await self.storage.update_user_name(user_id, new_name)
+                else:
+                    not_found.append(current_name)
 
-        if not_found:
-            not_found_message = "Usuários não encontrados:\n" + "\n".join(not_found)
-            for chunk in [not_found_message[i:i + 1900] for i in range(0, len(not_found_message), 1900)]:
-                await ctx.send(f"🤖 `BOT`: ```{chunk}```")
-    except Exception as e:
-        await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao ajustar usuários: {e}```")
+            await loading_message.edit(content="🤖 `BOT`: ```Ajustes concluídos. Verifique os usuários não encontrados.```")
+
+            if not_found:
+                not_found_message = "Usuários não encontrados:\n" + "\n".join(not_found)
+                for chunk in [not_found_message[i:i + 1900] for i in range(0, len(not_found_message), 1900)]:
+                    await ctx.send(f"🤖 `BOT`: ```{chunk}```")
+        except Exception as e:
+            await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao ajustar usuários: {e}```")
 
 async def setup(bot):
     from services.storage import Storage
