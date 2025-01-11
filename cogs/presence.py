@@ -43,10 +43,12 @@ class Presence(commands.Cog):
 
         loading_message = await ctx.send("🤖 `BOT`: Salvando presenças no banco de dados... ⏳")
         try:
-            await self.storage.save_presence(list(self.users_marked))
+            participants = [user[0] for user in self.users_marked]
+            await self.storage.save_presence(participants)
             await loading_message.edit(content="🤖 `BOT`: ```Presença salva com sucesso!```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao salvar presença: {e}```")
+
 
     @commands.command(name="startPresence")
     async def start_presence(self, ctx):
@@ -73,15 +75,11 @@ class Presence(commands.Cog):
         try:
             message = await ctx.channel.fetch_message(self.presence_message)
             await message.delete()
-        except discord.NotFound:
-            await loading_message.edit(content="🤖 `BOT`: ```Mensagem de presença não encontrada. Finalizando mesmo assim.```")
+            self.presence_message = None
+            self.users_marked.clear()
+            await loading_message.edit(content="🤖 `BOT`: ```Presença finalizada com sucesso.```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao finalizar presença: {e}```")
-            return
-
-        self.presence_message = None
-        self.users_marked.clear()
-        await loading_message.edit(content="🤖 `BOT`: ```Presença finalizada com sucesso.```")
 
     @commands.command(name="listPresence")
     async def list_presence(self, ctx):
@@ -96,7 +94,7 @@ class Presence(commands.Cog):
             return
 
         header = f"{'Nome do Usuário':<25} {'✅ Presença'}\n{'-'*40}\n"
-        user_list = "\n".join([f"👤 {user:<25}" for user in sorted(self.users_marked)])
+        user_list = "\n".join([f"👤 {user[1]:<25}" for user in sorted(self.users_marked, key=lambda x: x[1])])  # Nome no servidor
         panel = f"```{header}{user_list}```"
         await ctx.send(f"🤖 `BOT`: {panel}")
 
@@ -108,7 +106,7 @@ class Presence(commands.Cog):
         if reaction.message.id == self.presence_message and reaction.emoji == "✅":
             guild_member = reaction.message.guild.get_member(user.id)
             if guild_member:
-                self.users_marked.add(guild_member.display_name)
+                self.users_marked.add((user.name, guild_member.display_name))
 
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
@@ -132,18 +130,17 @@ class Presence(commands.Cog):
                 await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença registrada nos últimos 7 dias.```")
                 return
 
-            participant_counts = {}
-            for presence in recent_presences:
-                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
-
-            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+            guild_members = {member.name: member.display_name for member in ctx.guild.members}
             report = "Presenças na última semana:\n"
-            for participant, count in sorted_participants:
-                report += f"👤 {participant}: {count} presenças\n"
+            for presence in recent_presences:
+                discord_name = presence["participant"]
+                display_name = guild_members.get(discord_name, f"{discord_name} (inválido)")
+                report += f"👤 {display_name}: {presence['timestamp']}\n"
 
             await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
+
 
     @commands.command(name="listMonthPresence")
     async def list_month_presence(self, ctx):
@@ -157,18 +154,23 @@ class Presence(commands.Cog):
                 await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença registrada no último mês.```")
                 return
 
+            guild_members = {member.name: member.display_name for member in ctx.guild.members}
+
             participant_counts = {}
             for presence in recent_presences:
                 participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
 
             sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+
             report = "Presenças no último mês:\n"
             for participant, count in sorted_participants:
-                report += f"👤 {participant}: {count} presenças\n"
+                display_name = guild_members.get(participant, f"{participant} (inválido)")
+                report += f"👤 {display_name}: {count} presenças\n"
 
             await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
+
 
     @commands.command(name="exportPresenceByMonth")
     async def export_presence_by_month(self, ctx):
@@ -182,10 +184,14 @@ class Presence(commands.Cog):
                 await loading_message.edit(content="🤖 `BOT`: ```Nenhuma presença encontrada no banco de dados.```")
                 return
 
+            guild_members = {member.name: member.display_name for member in ctx.guild.members}
             data = {
                 "Ano": [presence["timestamp"].year for presence in all_presences],
                 "Mês": [presence["timestamp"].month for presence in all_presences],
-                "Usuário": [presence["participant"] for presence in all_presences],
+                "Usuário": [
+                    guild_members.get(presence["participant"], f"{presence['participant']} (inválido)")
+                    for presence in all_presences
+                ],
             }
             df = pd.DataFrame(data)
 
@@ -203,6 +209,7 @@ class Presence(commands.Cog):
             )
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao gerar relatório: {e}```")
+
 
 async def setup(bot):
     from services.storage import Storage
