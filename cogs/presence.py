@@ -131,13 +131,30 @@ class Presence(commands.Cog):
                 return
 
             guild_members = {member.name: member.display_name for member in ctx.guild.members}
-            report = "Presenças na última semana:\n"
-            for presence in recent_presences:
-                discord_name = presence["participant"]
-                display_name = guild_members.get(discord_name, f"{discord_name} (inválido)")
-                report += f"👤 {display_name}: {presence['timestamp']}\n"
+            participant_counts = {}
 
-            await loading_message.edit(content=f"🤖 `BOT`: ```{report}```")
+            for presence in recent_presences:
+                participant_counts[presence["participant"]] = participant_counts.get(presence["participant"], 0) + 1
+
+            sorted_participants = sorted(participant_counts.items(), key=lambda x: x[1], reverse=True)
+
+            report = "Presenças na última semana:\n"
+            reports = []
+            for participant, count in sorted_participants:
+                display_name = guild_members.get(participant, f"{participant} (inválido)")
+                line = f"👤 {display_name}: {count} presenças\n"
+                if len(report) + len(line) > 1900:
+                    reports.append(report)
+                    report = ""
+                report += line
+
+            if report:
+                reports.append(report)
+
+            await loading_message.delete()
+
+            for report in reports:
+                await ctx.send(f"🤖 `BOT`: ```{report}```")
         except Exception as e:
             await loading_message.edit(content=f"🤖 `BOT`: ```Erro ao listar presenças: {e}```")
 
