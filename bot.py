@@ -21,7 +21,7 @@ bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 async def setup_hook():
     await bot.load_extension("cogs.music")
     await bot.load_extension("cogs.presence")
-    await bot.load_extension("cogs.polls")
+    await bot.load_extension("cogs.poll")
 
 @bot.event
 async def on_ready():
