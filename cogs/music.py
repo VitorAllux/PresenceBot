@@ -72,6 +72,22 @@ class Music(commands.Cog):
             await ctx.voice_client.disconnect()
             await ctx.send("👋 `BOT`: Fila vazia. Saindo do canal de voz.")
 
+    @commands.command(name="helpMusic")
+    async def help_music(self, ctx):
+        await ctx.message.delete()
+        help_text = """
+        ```
+        🎵 Comandos de Música:
+        - `!play <nome/link>` : Toca uma música do YouTube.
+        - `!skip` : Pula para a próxima música da fila.
+        - `!pause` : Pausa a música atual.
+        - `!resume` : Retoma a música pausada.
+        - `!queue` : Mostra a fila de músicas.
+        - `!leave` : Sai do canal de voz.
+        ```
+        """
+        await ctx.send(help_text)
+
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
         logger.info(f"🎵 Comando play chamado com parâmetro: {search}")
