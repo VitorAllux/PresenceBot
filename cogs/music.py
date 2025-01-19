@@ -26,6 +26,7 @@ class Music(commands.Cog):
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
+        print('here');
         if not ctx.author.voice:
             return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
         if not ctx.voice_client:
