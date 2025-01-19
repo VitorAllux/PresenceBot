@@ -13,23 +13,33 @@ class Music(commands.Cog):
         self.queue = []
         self.current_song = None
 
-    async def get_audio_source(self, url):
-        logger.info(f"Obtendo fonte de áudio para URL: {url}")
-        ydl_opts = {
-            'format': 'bestaudio[ext=webm]/bestaudio[ext=m4a]/bestaudio/best',
-            'quiet': False
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            try:
-                info = ydl.extract_info(url, download=False)
-                formats = [fmt['url'] for fmt in info['formats'] if 'audio' in fmt.get('format_note', '')]
-                if not formats:
-                    raise Exception("Nenhum formato de áudio válido encontrado.")
-                logger.info("Fonte de áudio obtida com sucesso.")
-                return FFmpegPCMAudio(formats[0])
-            except Exception as e:
-                logger.error(f"Erro ao obter áudio: {e}")
-                raise
+async def get_audio_source(self, url):
+    logger.info(f"Obtendo fonte de áudio para URL: {url}")
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'noplaylist': True,  # Evita pegar playlists inteiras
+        'quiet': False,
+        'default_search': 'ytsearch',  # Permite pesquisar mesmo sem URL direta
+        'extract_flat': False
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            info = ydl.extract_info(url, download=False)
+            
+            # Obtém a melhor URL de áudio disponível
+            formats = [fmt['url'] for fmt in info.get('formats', []) if fmt.get('acodec') != 'none']
+            
+            if not formats:
+                raise Exception("Nenhum formato de áudio válido encontrado.")
+
+            logger.info("Fonte de áudio obtida com sucesso.")
+            return FFmpegPCMAudio(formats[0])
+
+        except Exception as e:
+            logger.error(f"Erro ao obter áudio: {e}")
+            raise
 
     async def play_next(self, ctx):
         logger.info(f"Tocando próxima música. Fila: {self.queue}")
