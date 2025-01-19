@@ -8,25 +8,21 @@ class Music(commands.Cog):
         self.bot = bot
         self.queue = []
 
-    @commands.Cog.listener()
     async def on_ready(self):
-        """ Conectar ao Lavalink corretamente no Wavelink 3+ """
-        await asyncio.sleep(3)  # Evita erro de conexão antes do bot estar pronto
-        print("🤖 Bot está pronto! Conectando ao Lavalink...")
+        print("🤖 Bot está pronto! Conectando ao servidor Lavalink...")
 
-        if not wavelink.NodePool.is_connected():
-            try:
-                await wavelink.NodePool.create_node(
-                    bot=self.bot,
-                    host="lavalink.oops.wtf",
-                    port=443,
-                    password="www.freelavalink.ga",
-                    https=True  # IMPORTANTE: Agora precisa de HTTPS=True para conexões seguras
-                )
-                print("✅ Conectado ao Lavalink com sucesso!")
+        # Configuração do nó Lavalink
+        node = wavelink.Node(
+            uri="wss://lavalink_v3_no_yt.muzykant.xyz:443",
+            password="https://discord.gg/v6sdrD9kPh",
+            secure=True
+        )
 
-            except Exception as e:
-                print(f"❌ Erro ao conectar ao Lavalink: {e}")
+        try:
+            await wavelink.NodePool.connect(client=self.bot, nodes=[node])
+            print("✅ Conectado ao servidor Lavalink com sucesso!")
+        except Exception as e:
+            print(f"❌ Erro ao conectar ao servidor Lavalink: {e}")
 
     @commands.command(name="join")
     async def join(self, ctx):
