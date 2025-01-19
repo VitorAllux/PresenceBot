@@ -33,37 +33,37 @@ class Music(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        # Verifica se o Lavalink está conectado antes de tocar música
-        if not wavelink.Pool.get_nodes():
-            print("❌ ERRO: Lavalink não está conectado!")
-            return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
-
-        # Conectar ao canal de voz, se necessário
-        if not vc:
+        # Se o bot não estiver no canal de voz, tenta conectar
+        if not vc or not vc.is_connected():
             if not ctx.author.voice:
                 return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
-
-            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+            
+            # Conectando automaticamente ao canal de voz
+            vc = await ctx.author.voice.channel.connect(cls=wavelink.Player)
             print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
 
-        # Buscando a música
+        # Verificando se o Lavalink está conectado
+        if not wavelink.Pool.get_nodes():
+            return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
+
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
+
         try:
             tracks = await wavelink.YouTubeTrack.search(search)
-            if not tracks:
-                return await loading_message.edit(content="❌ `BOT`: Música não encontrada!")
-
-            track = tracks[0]
-            self.queue.append(track)
-
-            if not vc.is_playing():
-                await vc.play(self.queue.pop(0))
-                await loading_message.edit(content=f"🎶 `BOT`: Tocando agora: **{track.title}**")
-            else:
-                await loading_message.edit(content=f"📜 `BOT`: **{track.title}** adicionada à fila!")
-
         except Exception as e:
             return await loading_message.edit(content=f"❌ `BOT`: Erro ao buscar música: {e}")
+
+        if not tracks:
+            return await loading_message.edit(content="❌ `BOT`: Música não encontrada!")
+
+        track = tracks[0]
+        self.queue.append(track)
+
+        if not vc.is_playing():
+            await vc.play(self.queue.pop(0))
+            await loading_message.edit(content=f"🎶 `BOT`: Tocando agora: **{track.title}**")
+        else:
+            await loading_message.edit(content=f"📜 `BOT`: **{track.title}** adicionada à fila!")
 
     @commands.Cog.listener()
     async def on_wavelink_track_end(self, player: wavelink.Player, track, reason):
