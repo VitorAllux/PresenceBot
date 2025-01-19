@@ -37,7 +37,7 @@ class Music(commands.Cog):
         if not wavelink.Pool.get_nodes():
             print("❌ Lavalink não está conectado.")
             return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
-
+        print("bbbbbbbbbbbbbbbbbbbbbbb")
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
         print(f"🔎 Buscando música: {search}")
 
