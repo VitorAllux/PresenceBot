@@ -23,13 +23,9 @@ async def connect_lavalink():
     print("🔌 Tentando conectar ao Lavalink...")
 
     try:
-        await wavelink.NodePool.create_node(
-            bot=bot,
-            host="ll3.myhm.space",
-            port=443,
-            password="d.gg/therepublic",
-            https=True
-        )
+        node = wavelink.Node(uri="wss://ll3.myhm.space:443", password="d.gg/therepublic")
+        await wavelink.Pool.connect(client=bot, nodes=[node])
+
         print("✅ Conectado ao Lavalink com sucesso!")
 
     except Exception as e:
