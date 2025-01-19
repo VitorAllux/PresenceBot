@@ -16,7 +16,7 @@ class Music(commands.Cog):
     async def get_audio_source(self, url):
         logger.info(f"Obtendo fonte de áudio para URL: {url}")
         ydl_opts = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=webm]/bestaudio[ext=m4a]/bestaudio/best',
             'quiet': False
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
