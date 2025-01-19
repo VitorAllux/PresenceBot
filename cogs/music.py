@@ -9,14 +9,13 @@ class Music(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        """Conectar ao Lavalink após o bot estar pronto"""
         print("🤖 Bot está pronto! Conectando ao Lavalink...")
 
         node = wavelink.Node(
             uri="ws://autorack.proxy.rlwy.net:37005",
             password="youshallnotpass",
             resume_key="my_bot",
-            user_id=self.bot.user.id  # Agora funciona porque o bot já está pronto
+            user_id=self.bot.user.id
         )
 
         await wavelink.Pool.connect(client=self.bot, nodes=[node])
