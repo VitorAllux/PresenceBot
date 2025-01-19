@@ -8,7 +8,7 @@ class Music(commands.Cog):
         self.queue = []
 
     async def cog_load(self):
-        node = wavelink.Node(uri="http://sparkling-reverence-production.up.railway.app:8080", password="youshallnotpass")
+        node = wavelink.Node(uri="http://sparkling-reverence.railway.internal:8080", password="youshallnotpass")
         await wavelink.Pool.connect(client=self.bot, nodes=[node])
 
     @commands.command(name="helpMusic")
