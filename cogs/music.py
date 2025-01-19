@@ -7,33 +7,12 @@ class Music(commands.Cog):
         self.bot = bot
         self.queue = []
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """ Conecta ao Lavalink ao iniciar """
-        await self.connect_lavalink()
-
-    async def connect_lavalink(self):
-        """ Conexão com o servidor Lavalink """
-        print("🔌 Tentando conectar ao Lavalink...")
-
-        node = wavelink.Node(
-            uri="wss://lavalink.alfari.id",
-            password="catfein"
-        )
-
-        try:
-            await wavelink.Pool.connect(client=self.bot, nodes=[node])
-            print("✅ Conectado ao Lavalink com sucesso!")
-        except Exception as e:
-            print(f"❌ Erro ao conectar ao Lavalink: {e}")
-
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
         await ctx.message.delete()
 
         vc: wavelink.Player = ctx.voice_client
 
-        # Se o bot não estiver no canal de voz, tenta conectar
         if not vc or not vc.is_connected():
             if not ctx.author.voice:
                 return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
