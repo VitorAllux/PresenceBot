@@ -9,31 +9,45 @@ class Music(commands.Cog):
 
     @commands.command(name="join")
     async def join(self, ctx):
-        await ctx.message.delete()
+        print(f"🛠 Recebido comando !join de {ctx.author} no canal {ctx.channel}")  # Log para depuração
 
+        # Apagar a mensagem do usuário
+        try:
+            await ctx.message.delete()
+        except Exception as e:
+            print(f"⚠ Erro ao deletar mensagem: {e}")
+
+        # Verifica se o Lavalink está conectado
         if not wavelink.Pool.get_nodes():
+            print("❌ ERRO: Lavalink não está conectado!")
             return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
 
+        # Verifica se o usuário está em um canal de voz
         if not ctx.author.voice:
+            print("❌ ERRO: Usuário não está em um canal de voz!")
             return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
 
         channel = ctx.author.voice.channel
+        print(f"📡 Usuário está no canal de voz: {channel.name}")
 
-        # Verifica se o bot já está conectado a algum canal
+        # Se o bot já estiver conectado, não conectar novamente
         if ctx.voice_client:
+            print("⚠ O bot já está conectado a um canal de voz.")
             return await ctx.send("⚠ `BOT`: Já estou conectado a um canal de voz!")
 
         loading_message = await ctx.send(f"🤖 `BOT`: Tentando conectar ao canal **{channel.name}**... ⏳")
 
         try:
-            # Conectar ao canal de voz com Wavelink Player
+            # Tenta conectar ao canal de voz com Wavelink Player
+            print("🔄 Tentando conectar ao canal de voz...")
             vc: wavelink.Player = await channel.connect(cls=wavelink.Player)
+            print("✅ Conectado ao canal de voz com sucesso!")
+
             await loading_message.edit(content=f"🎵 `BOT`: Conectado ao canal **{channel.name}**!")
-            print(f"✅ Bot conectado ao canal: {channel.name}")
 
         except Exception as e:
+            print(f"❌ ERRO AO CONECTAR: {e}")
             await loading_message.edit(content=f"❌ `BOT`: Erro ao conectar ao canal: `{e}`")
-            print(f"❌ Erro ao conectar ao canal de voz: {e}")
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
