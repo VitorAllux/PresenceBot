@@ -7,4 +7,3 @@ xlsxwriter
 wavelink
 yt-dlp
 ffmpeg
-logging
