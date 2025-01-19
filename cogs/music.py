@@ -24,12 +24,16 @@ class Music(commands.Cog):
                 return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
 
             # Conectando automaticamente ao canal de voz, se não estiver conectado
-            vc = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-            print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
+            try:
+                vc = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+                print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
+            except Exception as e:
+                print(f"❌ Erro ao conectar ao canal de voz: {e}")
+                return await ctx.send("❌ `BOT`: Erro ao conectar ao canal de voz.")
         else:
-            print("⚠ O bot já está conectado a um canal de voz, não será necessário reconectar.")
+            print(f"⚠ O bot já está conectado ao canal de voz: {ctx.voice_client.channel.name}")
 
-        # Verificando se o Lavalink está conectado
+        print("aaaaaaaaaaaaaaaaaaaaa")
         if not wavelink.Pool.get_nodes():
             print("❌ Lavalink não está conectado.")
             return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
