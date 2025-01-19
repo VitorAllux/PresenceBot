@@ -17,7 +17,6 @@ class Music(commands.Cog):
         logger.info(f"Obtendo fonte de áudio para URL: {url}")
         ydl_opts = {
             'format': 'bestaudio/best',
-            'postprocessors': [{'key': 'FFmpegAudioConvertor', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
             'quiet': False
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
