@@ -5,5 +5,4 @@ openpyxl
 asyncpg
 xlsxwriter
 wavelink
-discord.py
 yt-dlp

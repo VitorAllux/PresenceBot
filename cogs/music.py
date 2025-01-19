@@ -1,130 +1,98 @@
 import discord
-import wavelink
+import yt_dlp
 from discord.ext import commands
+from discord import FFmpegPCMAudio
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.queue = []
 
+    async def get_audio_source(self, url):
+        """Obtém a fonte de áudio para o YouTube usando yt-dlp e FFmpeg"""
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegAudioConvertor',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'outtmpl': 'downloads/%(id)s.%(ext)s',
+            'quiet': True
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            url2 = info['formats'][0]['url']
+            return FFmpegPCMAudio(url2)
+
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
-        print(f"🛠 Recebido comando !play de {ctx.author} no canal {ctx.channel}")  # Log para depuração
+        if not ctx.author.voice:
+            return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
 
-        await ctx.message.delete()
-        print("❗ Mensagem do usuário apagada.")
-
-        vc: wavelink.Player = ctx.voice_client
-        print(f"🎵 Tentando conectar ao canal de voz...")
-
-        # Verifica se o bot já está conectado ao canal de voz
-        if not vc or not vc.is_connected():
-            if not ctx.author.voice:
-                print("❌ O usuário não está em um canal de voz.")
-                return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
-
-            # Conectando automaticamente ao canal de voz, se não estiver conectado
-            try:
-                vc = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-                print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
-            except Exception as e:
-                print(f"❌ Erro ao conectar ao canal de voz: {e}")
-                return await ctx.send("❌ `BOT`: Erro ao conectar ao canal de voz.")
+        # Se o bot não estiver no canal de voz, tenta conectar
+        if not ctx.voice_client:
+            vc = await ctx.author.voice.channel.connect(cls=discord.VoiceClient)
         else:
-            print(f"⚠ O bot já está conectado ao canal de voz: {ctx.voice_client.channel.name}")
+            vc = ctx.voice_client
 
-        print("aaaaaaaaaaaaaaaaaaaaa")
-        # if not wavelink.Pool.get_nodes():
-        #     print("❌ Lavalink não está conectado.")
-        #     return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
-        print("bbbbbbbbbbbbbbbbbbbbbbb")
-        loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
-        print(f"🔎 Buscando música: {search}")
-
-        print("ccccccccccccccc")
-        tracks = await wavelink.YouTubeTrack.search(search)
-        print(f"📝 Resultados da busca: {tracks}")
-        print("dddddddddddddddddddddddd")
-        if not tracks:
-            print("❌ Nenhuma música encontrada.")
-            return await loading_message.edit(content="❌ `BOT`: Música não encontrada!")
-
-        track = tracks[0]
-        self.queue.append(track)
-        print(f"📜 Música **{track.title}** adicionada à fila!")
-
-        if not vc.is_playing():
-            print("🎶 O bot vai começar a tocar a música agora.")
-            await vc.play(self.queue.pop(0))
-            await loading_message.edit(content=f"🎶 `BOT`: Tocando agora: **{track.title}**")
-        else:
-            print("📜 Música adicionada à fila.")
-            await loading_message.edit(content=f"📜 `BOT`: **{track.title}** adicionada à fila!")
-
-    @commands.Cog.listener()
-    async def on_wavelink_track_end(self, player: wavelink.Player, track, reason):
-        print(f"🎶 A música **{track.title}** terminou. Verificando a fila.")
-        if self.queue:
-            next_track = self.queue.pop(0)
-            print(f"🎶 Tocando próxima música: {next_track.title}")
-            await player.play(next_track)
-        else:
-            print("❌ Não há músicas na fila. Desconectando...")
-            await player.disconnect()
+        url = search  # Pode ser um link do YouTube ou o nome da música.
+        
+        try:
+            audio_source = await self.get_audio_source(url)
+            vc.play(audio_source, after=lambda e: print(f'Error: {e}'))
+            await ctx.send(f"🎶 `BOT`: Tocando agora: {url}")
+        except Exception as e:
+            await ctx.send(f"❌ `BOT`: Erro ao tentar reproduzir a música: {e}")
 
     @commands.command(name="skip")
     async def skip(self, ctx):
-        await ctx.message.delete()
-        print("⏭ Pulando música...")
-
-        vc: wavelink.Player = ctx.voice_client
+        """Pula a música atual"""
+        vc = ctx.voice_client
         if vc and vc.is_playing():
-            print("🎶 Parando música atual.")
+            vc.stop()
             await ctx.send("⏭ `BOT`: Pulando música...")
-            await vc.stop()
         else:
-            print("❌ Nenhuma música tocando no momento.")
             await ctx.send("❌ `BOT`: Nenhuma música tocando no momento.")
 
     @commands.command(name="pause")
     async def pause(self, ctx):
-        await ctx.message.delete()
-        print("⏸ Pausando música...")
-
-        vc: wavelink.Player = ctx.voice_client
+        """Pausa a música atual"""
+        vc = ctx.voice_client
         if vc and vc.is_playing():
-            print("🎶 Música pausada.")
+            vc.pause()
             await ctx.send("⏸ `BOT`: Música pausada!")
-            await vc.pause()
         else:
-            print("❌ Nenhuma música tocando no momento.")
             await ctx.send("❌ `BOT`: Nenhuma música tocando no momento.")
 
     @commands.command(name="resume")
     async def resume(self, ctx):
-        await ctx.message.delete()
-        print("▶ Retomando música...")
-
-        vc: wavelink.Player = ctx.voice_client
-        if vc and vc.paused:
-            print("🎶 Retomando a música pausada.")
+        """Retoma a música que foi pausada"""
+        vc = ctx.voice_client
+        if vc and vc.is_paused():
+            vc.resume()
             await ctx.send("▶ `BOT`: Música retomada!")
-            await vc.resume()
         else:
-            print("❌ Nenhuma música está pausada.")
-            await ctx.send("❌ `BOT`: Nenhuma música está pausada.")
+            await ctx.send("❌ `BOT`: Nenhuma música pausada.")
 
     @commands.command(name="queue")
     async def show_queue(self, ctx):
-        await ctx.message.delete()
-        print("📜 Mostrando fila de músicas...")
-
+        """Mostra a fila de músicas"""
         if not self.queue:
-            print("❌ A fila de músicas está vazia.")
             return await ctx.send("❌ `BOT`: A fila de músicas está vazia!")
 
-        queue_text = "\n".join(f"🎶 {i+1}. {track.title}" for i, track in enumerate(self.queue))
+        queue_text = "\n".join(f"🎶 {i+1}. {track}" for i, track in enumerate(self.queue))
         await ctx.send(f"🎵 `BOT`: ```📜 Fila de Músicas:\n{queue_text}```")
+
+    @commands.command(name="leave")
+    async def leave(self, ctx):
+        """Desconecta o bot do canal de voz"""
+        if ctx.voice_client:
+            await ctx.voice_client.disconnect()
+            await ctx.send("👋 `BOT`: Desconectado do canal de voz.")
+        else:
+            await ctx.send("❌ `BOT`: O bot não está conectado a um canal de voz!")
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
