@@ -17,8 +17,8 @@ class Music(commands.Cog):
         print("🔌 Tentando conectar ao Lavalink...")
 
         node = wavelink.Node(
-            uri="wss://lavalink.alfari.id",  # URI do servidor
-            password="catfein",  # Senha do servidor
+            uri="lava-v4.ajieblogs.eu.org",
+            password="https://dsc.gg/ajidevserver"
         )
 
         try:
