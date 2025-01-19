@@ -7,9 +7,10 @@ class Music(commands.Cog):
         self.bot = bot
         self.queue = []
 
+    @commands.Cog.listener()
     async def on_ready(self):
         await asyncio.sleep(3)
-        print("🤖 Bot está pronto! Conectando ao Lavalink...")
+        print("🤖 Bot está pronto! Tentando conectar ao Lavalink...")
 
         if not wavelink.NodePool.is_connected():
             try:
@@ -55,6 +56,9 @@ class Music(commands.Cog):
             else:
                 return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
 
+        if not wavelink.NodePool.is_connected():
+            return await ctx.send("❌ `BOT`: Lavalink não está conectado. Tente novamente mais tarde!")
+
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
 
         try:
@@ -75,6 +79,7 @@ class Music(commands.Cog):
         else:
             await loading_message.edit(content=f"📜 `BOT`: **{track.title}** adicionada à fila!")
             print(f"📜 Adicionada à fila: {track.title}")
+
 
     @commands.Cog.listener()
     async def on_wavelink_track_end(self, player: wavelink.Player, track, reason):
