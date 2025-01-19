@@ -83,4 +83,5 @@ class Music(commands.Cog):
             await ctx.send("❌ `BOT`: O bot não está conectado a um canal de voz!")
 
 async def setup(bot):
+    print("✅ Cog Music carregada com sucesso!")
     await bot.add_cog(Music(bot))
