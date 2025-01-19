@@ -7,14 +7,20 @@ class Music(commands.Cog):
         self.bot = bot
         self.queue = []
 
-    async def cog_load(self):
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """Conectar ao Lavalink após o bot estar pronto"""
+        print("🤖 Bot está pronto! Conectando ao Lavalink...")
+
         node = wavelink.Node(
             uri="ws://autorack.proxy.rlwy.net:37005",
             password="youshallnotpass",
             resume_key="my_bot",
-            user_id=self.bot.user.id
+            user_id=self.bot.user.id  # Agora funciona porque o bot já está pronto
         )
+
         await wavelink.Pool.connect(client=self.bot, nodes=[node])
+        print("✅ Conectado ao Lavalink com sucesso!")
 
     @commands.command(name="helpMusic")
     async def help_music(self, ctx):
