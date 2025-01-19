@@ -41,10 +41,10 @@ class Music(commands.Cog):
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
         print(f"🔎 Buscando música: {search}")
 
-
+        print("ccccccccccccccc")
         tracks = await wavelink.YouTubeTrack.search(search)
         print(f"📝 Resultados da busca: {tracks}")
-
+        print("dddddddddddddddddddddddd")
         if not tracks:
             print("❌ Nenhuma música encontrada.")
             return await loading_message.edit(content="❌ `BOT`: Música não encontrada!")
