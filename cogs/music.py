@@ -12,7 +12,7 @@ class Music(commands.Cog):
         print("🤖 Bot está pronto! Conectando ao Lavalink...")
 
         node = wavelink.Node(
-            uri="ws://autorack.proxy.rlwy.net:37005",
+            uri="ws://lavalink.railway.internal:2333",
             password="youshallnotpass",
             resume_key="my_bot",
             user_id=self.bot.user.id
