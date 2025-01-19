@@ -17,8 +17,8 @@ class Music(commands.Cog):
         print("🔌 Tentando conectar ao Lavalink...")
 
         node = wavelink.Node(
-            uri="lava-v4.ajieblogs.eu.org",
-            password="https://dsc.gg/ajidevserver"
+            uri="wss://lavalink.alfari.id",
+            password="catfein"
         )
 
         try:
@@ -37,7 +37,7 @@ class Music(commands.Cog):
         if not vc or not vc.is_connected():
             if not ctx.author.voice:
                 return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
-            
+
             # Conectando automaticamente ao canal de voz
             vc = await ctx.author.voice.channel.connect(cls=wavelink.Player)
             print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
@@ -50,6 +50,7 @@ class Music(commands.Cog):
 
         try:
             tracks = await wavelink.YouTubeTrack.search(search)
+            print(f"📝 Resultados da busca: {tracks}")
         except Exception as e:
             return await loading_message.edit(content=f"❌ `BOT`: Erro ao buscar música: {e}")
 
