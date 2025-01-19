@@ -9,12 +9,17 @@ class Poll(commands.Cog):
         self.active_polls = {}
 
     @commands.command(name="createPoll")
-    async def create_poll(self, ctx, max_votes: int, title: str, *, options: str):
-        """
-        Cria uma enquete.
-        Uso: !createPoll <max_votos_por_pessoa> "Título da Enquete" "Opção 1, Opção 2, Opção 3"
-        """
+    async def create_poll(self, ctx, max_votes: str, title: str, *, options: str):
         await ctx.message.delete()
+
+        if not max_votes.isdigit():
+            await ctx.send("❌ `BOT`: O número máximo de votos deve ser um número inteiro válido!")
+            return
+
+        max_votes = int(max_votes)
+        if max_votes < 1:
+            await ctx.send("❌ `BOT`: O número máximo de votos deve ser pelo menos 1!")
+            return
 
         options_list = [opt.strip() for opt in options.split(",") if opt.strip()]
         if len(options_list) < 2:
@@ -46,7 +51,6 @@ class Poll(commands.Cog):
 
     @commands.command(name="endPoll")
     async def end_poll(self, ctx, message_id: int):
-        """Finaliza uma enquete e exibe os resultados."""
         if message_id not in self.active_polls:
             await ctx.send("❌ `BOT`: ID de enquete inválido!")
             return
@@ -63,31 +67,13 @@ class Poll(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="pollHelp")
+    @commands.command(name="helpPoll")
     async def poll_help(self, ctx):
-        """Exibe os comandos disponíveis para enquetes."""
         embed = discord.Embed(title="📊 **Comandos de Enquete**", color=discord.Color.blue())
         embed.add_field(name="!createPoll <max_votos> \"Título\" \"Opção 1, Opção 2, ...\"", value="Cria uma nova enquete.", inline=False)
         embed.add_field(name="!endPoll <id_mensagem>", value="Finaliza a enquete e mostra os resultados.", inline=False)
-        embed.add_field(name="!pollHelp", value="Mostra esta ajuda.", inline=False)
+        embed.add_field(name="!helpPoll", value="Mostra esta ajuda.", inline=False)
         await ctx.send(embed=embed)
-
-    async def update_poll_message(self, message):
-        if message.id not in self.active_polls:
-            return
-
-        poll = self.active_polls[message.id]
-        total_votes = sum(len(opt["votes"]) for opt in poll["options"].values())
-        embed = discord.Embed(title=f"📊 **{poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.gold())
-
-        for emoji, data in poll["options"].items():
-            votes = len(data["votes"])
-            percentage = (votes / total_votes * 100) if total_votes > 0 else 0
-            bar = "🟩" * int(percentage / 10) + "⬜" * (10 - int(percentage / 10))
-            embed.add_field(name=f"{emoji} {data['text']}", value=f"{bar} ({percentage:.1f}%) - `{votes}` votos", inline=False)
-        
-        embed.set_footer(text=f"Máximo de {poll['max_votes']} votos por pessoa. Reaja para votar!")
-        await message.edit(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Poll(bot))
