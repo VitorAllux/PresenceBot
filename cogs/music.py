@@ -16,30 +16,50 @@ class Music(commands.Cog):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'outtmpl': 'downloads/%(id)s.%(ext)s',
             'quiet': True
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            url2 = info['formats'][0]['url']
-            return FFmpegPCMAudio(url2)
+            formats = [fmt['url'] for fmt in info['formats'] if 'audio' in fmt['format_note']]
+            if not formats:
+                raise Exception("Nenhum formato de áudio válido encontrado.")
+            return FFmpegPCMAudio(formats[0])
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
-        print('here');
+        print('Comando play chamado!')
+
         if not ctx.author.voice:
             return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
+
         if not ctx.voice_client:
-            vc = await ctx.author.voice.channel.connect(cls=discord.VoiceClient)
+            vc = await ctx.author.voice.channel.connect()
         else:
             vc = ctx.voice_client
+
         url = search
         try:
             audio_source = await self.get_audio_source(url)
-            vc.play(audio_source, after=lambda e: print(f'Error: {e}'))
+            vc.play(audio_source, after=lambda e: print(f'Erro na reprodução: {e}'))
             await ctx.send(f"🎶 `BOT`: Tocando agora: {url}")
         except Exception as e:
             await ctx.send(f"❌ `BOT`: Erro ao tentar reproduzir a música: {e}")
+
+    @commands.command(name="helpMusic")
+    async def help_music(self, ctx):
+        await ctx.message.delete()
+        help_text = """
+        ```
+        🎵 Comandos de Música
+        - `!play <link>` : Toca uma música do YouTube.
+        - `!skip` : Pula para a próxima música da fila.
+        - `!pause` : Pausa a música atual.
+        - `!resume` : Retoma a música pausada.
+        - `!queue` : Mostra a fila de músicas.
+        - `!leave` : Sai do canal de voz.
+        ```
+        """
+        await ctx.send(help_text)
 
     @commands.command(name="skip")
     async def skip(self, ctx):
