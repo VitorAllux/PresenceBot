@@ -7,52 +7,62 @@ class Music(commands.Cog):
         self.bot = bot
         self.queue = []
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """ Conecta ao Lavalink ao iniciar """
+        await self.connect_lavalink()
+
+    async def connect_lavalink(self):
+        """ Conexão com o servidor Lavalink """
+        print("🔌 Tentando conectar ao Lavalink...")
+
+        node = wavelink.Node(
+            uri="wss://lavalink.alfari.id",  # URI do servidor
+            password="catfein",  # Senha do servidor
+        )
+
+        try:
+            await wavelink.Pool.connect(client=self.bot, nodes=[node])
+            print("✅ Conectado ao Lavalink com sucesso!")
+        except Exception as e:
+            print(f"❌ Erro ao conectar ao Lavalink: {e}")
+
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
         await ctx.message.delete()
+
         vc: wavelink.Player = ctx.voice_client
 
-        # 🔍 Verifica se o Lavalink está conectado antes de tocar música
+        # Verifica se o Lavalink está conectado antes de tocar música
         if not wavelink.Pool.get_nodes():
             print("❌ ERRO: Lavalink não está conectado!")
             return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
 
-        # 🔍 Verifica se o usuário está em um canal de voz antes de conectar
-        if not vc or not vc.is_connected():
+        # Conectar ao canal de voz, se necessário
+        if not vc:
             if not ctx.author.voice:
                 return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
 
-            try:
-                vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-                print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
-            except Exception as e:
-                print(f"❌ ERRO AO CONECTAR AO CANAL: {e}")
-                return await ctx.send(f"❌ `BOT`: Erro ao conectar ao canal de voz: `{e}`")
+            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+            print(f"🎵 Conectado ao canal de voz: {ctx.author.voice.channel.name}")
 
-        # 🔎 Buscando a música
+        # Buscando a música
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
         try:
             tracks = await wavelink.YouTubeTrack.search(search)
             if not tracks:
-                print("❌ ERRO: Nenhuma música encontrada!")
                 return await loading_message.edit(content="❌ `BOT`: Música não encontrada!")
 
             track = tracks[0]
-            print(f"🎶 Música encontrada: {track.title} | Duração: {track.length}")
-            
             self.queue.append(track)
 
-            # Se nada estiver tocando, começa a tocar
             if not vc.is_playing():
                 await vc.play(self.queue.pop(0))
                 await loading_message.edit(content=f"🎶 `BOT`: Tocando agora: **{track.title}**")
-                print(f"▶ Tocando: {track.title}")
             else:
                 await loading_message.edit(content=f"📜 `BOT`: **{track.title}** adicionada à fila!")
-                print(f"📜 Adicionada à fila: {track.title}")
 
         except Exception as e:
-            print(f"❌ ERRO AO BUSCAR MÚSICA: {e}")
             return await loading_message.edit(content=f"❌ `BOT`: Erro ao buscar música: {e}")
 
     @commands.Cog.listener()
@@ -60,17 +70,15 @@ class Music(commands.Cog):
         if self.queue:
             next_track = self.queue.pop(0)
             await player.play(next_track)
-            print(f"▶ Tocando próxima música: {next_track.title}")
         else:
             await player.disconnect()
-            print("🚪 Desconectando do canal de voz, fila de músicas vazia.")
 
     @commands.command(name="skip")
     async def skip(self, ctx):
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc and vc.is_playing():
-            print("⏭ Pulando música...")
+            await ctx.send("⏭ `BOT`: Pulando música...")
             await vc.stop()
 
     @commands.command(name="pause")
@@ -78,7 +86,7 @@ class Music(commands.Cog):
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc and vc.is_playing():
-            print("⏸ Música pausada.")
+            await ctx.send("⏸ `BOT`: Música pausada!")
             await vc.pause()
 
     @commands.command(name="resume")
@@ -86,7 +94,7 @@ class Music(commands.Cog):
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc and vc.paused:
-            print("▶ Música retomada.")
+            await ctx.send("▶ `BOT`: Música retomada!")
             await vc.resume()
 
     @commands.command(name="queue")
