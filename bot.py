@@ -24,8 +24,9 @@ async def connect_lavalink():
 
     try:
         node = wavelink.Node(
-            uri="https://lavalink_v3.muzykant.xyz:443",
-            password="youshallnotpass",
+            uri="https://ll3.myhm.space:443",
+            password="d.gg/therepublic",
+            secure=True
         )
 
         await wavelink.Pool.connect(client=bot, nodes=[node])
