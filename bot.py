@@ -21,10 +21,11 @@ bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 async def setup_hook():
     await bot.load_extension("cogs.music")
     await bot.load_extension("cogs.presence")
+    await bot.load_extension("cogs.polls")
 
 @bot.event
 async def on_ready():
-    print(f"🤖 Bot {bot.user} está online e pronto para tocar músicas!")
+    print(f"🤖 Bot {bot.user} está online e pronto para gerenciar enquetes, presenças e músicas!")
 
 async def main():
     await bot.start(TOKEN)
