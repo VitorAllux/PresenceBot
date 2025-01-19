@@ -1,6 +1,5 @@
 import discord
 import wavelink
-import asyncio
 from discord.ext import commands
 
 class Music(commands.Cog):
@@ -9,20 +8,22 @@ class Music(commands.Cog):
         self.queue = []
 
     async def on_ready(self):
-        print("🤖 Bot está pronto! Conectando ao servidor Lavalink...")
+        await asyncio.sleep(3)
+        print("🤖 Bot está pronto! Conectando ao Lavalink...")
 
-        # Configuração do nó Lavalink
-        node = wavelink.Node(
-            uri="wss://lavalink_v3_no_yt.muzykant.xyz:443",
-            password="https://discord.gg/v6sdrD9kPh",
-            secure=True
-        )
+        if not wavelink.NodePool.is_connected():
+            try:
+                await wavelink.NodePool.create_node(
+                    bot=self.bot,
+                    host="lavalink_v3_no_yt.muzykant.xyz",
+                    port=443,
+                    password="https://discord.gg/v6sdrD9kPh",
+                    https=True
+                )
+                print("✅ Conectado ao Lavalink com sucesso!")
 
-        try:
-            await wavelink.NodePool.connect(client=self.bot, nodes=[node])
-            print("✅ Conectado ao servidor Lavalink com sucesso!")
-        except Exception as e:
-            print(f"❌ Erro ao conectar ao servidor Lavalink: {e}")
+            except Exception as e:
+                print(f"❌ Erro ao conectar ao Lavalink: {e}")
 
     @commands.command(name="join")
     async def join(self, ctx):
