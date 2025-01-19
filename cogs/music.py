@@ -11,19 +11,29 @@ class Music(commands.Cog):
     async def join(self, ctx):
         await ctx.message.delete()
 
-        if not wavelink.NodePool.is_connected():
+        if not wavelink.Pool.get_nodes():
             return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
 
-        if ctx.author.voice:
-            loading_message = await ctx.send("🤖 `BOT`: Conectando ao canal de voz... ⏳")
-            try:
-                vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-                await loading_message.edit(content="🎵 `BOT`: Conectado ao canal de voz!")
-            except Exception as e:
-                await loading_message.edit(content=f"❌ `BOT`: Erro ao conectar: `{e}`")
-                print(f"❌ Erro ao conectar ao canal de voz: {e}")
-        else:
-            await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
+        if not ctx.author.voice:
+            return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
+
+        channel = ctx.author.voice.channel
+
+        # Verifica se o bot já está conectado a algum canal
+        if ctx.voice_client:
+            return await ctx.send("⚠ `BOT`: Já estou conectado a um canal de voz!")
+
+        loading_message = await ctx.send(f"🤖 `BOT`: Tentando conectar ao canal **{channel.name}**... ⏳")
+
+        try:
+            # Conectar ao canal de voz com Wavelink Player
+            vc: wavelink.Player = await channel.connect(cls=wavelink.Player)
+            await loading_message.edit(content=f"🎵 `BOT`: Conectado ao canal **{channel.name}**!")
+            print(f"✅ Bot conectado ao canal: {channel.name}")
+
+        except Exception as e:
+            await loading_message.edit(content=f"❌ `BOT`: Erro ao conectar ao canal: `{e}`")
+            print(f"❌ Erro ao conectar ao canal de voz: {e}")
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
