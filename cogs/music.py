@@ -9,7 +9,6 @@ class Music(commands.Cog):
 
     @commands.command(name="join")
     async def join(self, ctx):
-        """ Comando para o bot entrar no canal de voz """
         await ctx.message.delete()
 
         if not wavelink.NodePool.is_connected():
@@ -28,7 +27,6 @@ class Music(commands.Cog):
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
-        """ Comando para tocar música """
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
 
@@ -61,7 +59,6 @@ class Music(commands.Cog):
 
     @commands.Cog.listener()
     async def on_wavelink_track_end(self, player: wavelink.Player, track, reason):
-        """ Evento chamado quando uma música termina """
         if self.queue:
             next_track = self.queue.pop(0)
             await player.play(next_track)
@@ -69,7 +66,6 @@ class Music(commands.Cog):
 
     @commands.command(name="skip")
     async def skip(self, ctx):
-        """ Pula para a próxima música """
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc and vc.is_playing():
@@ -80,7 +76,6 @@ class Music(commands.Cog):
 
     @commands.command(name="pause")
     async def pause(self, ctx):
-        """ Pausa a música """
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc and vc.is_playing():
@@ -91,7 +86,6 @@ class Music(commands.Cog):
 
     @commands.command(name="resume")
     async def resume(self, ctx):
-        """ Retoma a música """
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc and vc.paused:
@@ -102,7 +96,6 @@ class Music(commands.Cog):
 
     @commands.command(name="queue")
     async def show_queue(self, ctx):
-        """ Mostra a fila de músicas """
         await ctx.message.delete()
 
         if not self.queue:
@@ -113,7 +106,6 @@ class Music(commands.Cog):
 
     @commands.command(name="leave")
     async def leave(self, ctx):
-        """ Desconecta do canal de voz """
         await ctx.message.delete()
         vc: wavelink.Player = ctx.voice_client
         if vc:
