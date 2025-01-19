@@ -34,9 +34,9 @@ class Music(commands.Cog):
             print(f"⚠ O bot já está conectado ao canal de voz: {ctx.voice_client.channel.name}")
 
         print("aaaaaaaaaaaaaaaaaaaaa")
-        if not wavelink.Pool.get_nodes():
-            print("❌ Lavalink não está conectado.")
-            return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
+        # if not wavelink.Pool.get_nodes():
+        #     print("❌ Lavalink não está conectado.")
+        #     return await ctx.send("❌ `BOT`: Lavalink não está conectado.")
         print("bbbbbbbbbbbbbbbbbbbbbbb")
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
         print(f"🔎 Buscando música: {search}")
