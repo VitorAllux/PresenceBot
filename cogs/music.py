@@ -11,7 +11,8 @@ class Music(commands.Cog):
         node = wavelink.Node(
             uri="ws://autorack.proxy.rlwy.net:37005",
             password="youshallnotpass",
-            headers={"User-Id": "1324861941684109393"}
+            resume_key="my_bot",
+            user_id=self.bot.user.id
         )
         await wavelink.Pool.connect(client=self.bot, nodes=[node])
 
