@@ -8,3 +8,4 @@ wavelink
 yt-dlp
 ffmpeg
 PyNaCl
+matplotlib
