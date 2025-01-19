@@ -29,7 +29,6 @@ class Music(commands.Cog):
         help_text = """
         ```
         🎵 Comandos de Música
-        - `!join` : Entra no canal de voz.
         - `!leave` : Sai do canal de voz.
         - `!play <nome/link>` : Toca uma música.
         - `!pause` : Pausa a música.
@@ -41,26 +40,19 @@ class Music(commands.Cog):
         """
         await loading_message.edit(content=help_text)
 
-    @commands.command(name="join")
-    async def join(self, ctx):
-        await ctx.message.delete()
-
-        if ctx.author.voice:
-            loading_message = await ctx.send("🤖 `BOT`: Conectando ao canal de voz... ⏳")
-            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-            await loading_message.edit(content="🎵 `BOT`: Conectado ao canal de voz!")
-        else:
-            await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
-
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
         await ctx.message.delete()
 
         vc: wavelink.Player = ctx.voice_client
-        if not vc:
-            loading_message = await ctx.send("🤖 `BOT`: Entrando no canal de voz... ⏳")
-            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-            await loading_message.edit(content="🎵 `BOT`: Conectado ao canal de voz!")
+
+        if not vc or not vc.is_connected():
+            if ctx.author.voice:
+                loading_message = await ctx.send("🤖 `BOT`: Entrando no canal de voz... ⏳")
+                vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+                await loading_message.edit(content="🎵 `BOT`: Conectado ao canal de voz!")
+            else:
+                return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
 
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
         tracks = await wavelink.YouTubeTrack.search(search)
@@ -71,7 +63,7 @@ class Music(commands.Cog):
         track = tracks[0]
         self.queue.append(track)
 
-        if not vc.playing:
+        if not vc.is_playing():
             await vc.play(self.queue.pop(0))
             await loading_message.edit(content=f"🎶 `BOT`: Tocando agora: **{track.title}**")
         else:
