@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from collections import defaultdict
 import asyncio
-import matplotlib.pyplot as plt
-import io
 
 class Poll(commands.Cog):
     def __init__(self, bot):
@@ -47,7 +45,7 @@ class Poll(commands.Cog):
 
         embed = discord.Embed(title=f"📊 **{title}**", description=f"Criado por {ctx.author.display_name}\n\n", color=discord.Color.gold())
         for i, opt in enumerate(options_list):
-            embed.add_field(name=f"{reactions[i]} {opt}", value="⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ (0%)", inline=False)
+            embed.add_field(name=f"{reactions[i]} {opt}", value="`[⠀⠀⠀⠀⠀⠀⠀] 0% (0 votos)`", inline=False)
         embed.set_footer(text=f"Máximo de {max_votes} votos por pessoa. Reaja para votar!")
 
         poll_message = await ctx.send(embed=embed)
@@ -65,30 +63,13 @@ class Poll(commands.Cog):
         total_votes = sum(len(opt["votes"]) for opt in poll["options"].values())
         embed = discord.Embed(title=f"📊 **{poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.gold())
 
-        labels = []
-        votes = []
         for emoji, data in poll["options"].items():
             votes_count = len(data["votes"])
             percentage = (votes_count / total_votes * 100) if total_votes > 0 else 0
-            labels.append(f"{emoji} {data['text']}")
-            votes.append(votes_count)
             bar = "🟩" * int(percentage / 10) + "⬜" * (10 - int(percentage / 10))
-            embed.add_field(name=f"{emoji} {data['text']}", value=f"{bar} ({percentage:.1f}%) - `{votes_count}` votos", inline=False)
+            embed.add_field(name=f"{emoji} {data['text']}", value=f"`[{bar}] {percentage:.1f}% ({votes_count} votos)`", inline=False)
 
-        # Criar gráfico
-        fig, ax = plt.subplots()
-        ax.pie(votes, labels=labels, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
-        ax.axis('equal')
-        plt.title(f"Resultados Parcial: {poll['title']}")
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-        plt.close()
-
-        file = discord.File(buffer, filename="poll_update.png")
-        embed.set_image(url="attachment://poll_update.png")
-
-        await message.edit(embed=embed, attachments=[file])
+        await message.edit(embed=embed)
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
