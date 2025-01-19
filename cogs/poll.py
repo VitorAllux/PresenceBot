@@ -45,7 +45,7 @@ class Poll(commands.Cog):
 
         embed = discord.Embed(title=f"📊 **{title}**", description=f"Criado por {ctx.author.display_name}\n\n", color=discord.Color.gold())
         for i, opt in enumerate(options_list):
-            embed.add_field(name=f"{reactions[i]} {opt}", value="`[⠀⠀⠀⠀⠀⠀⠀] 0% (0 votos)`", inline=False)
+            embed.add_field(name=f"{reactions[i]} {opt}", value="`[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0% (0 votos)`", inline=False)
         embed.set_footer(text=f"Máximo de {max_votes} votos por pessoa. Reaja para votar!")
 
         poll_message = await ctx.send(embed=embed)
@@ -68,7 +68,8 @@ class Poll(commands.Cog):
             percentage = (votes_count / total_votes * 100) if total_votes > 0 else 0
             bar = "🟩" * int(percentage / 10) + "⬜" * (10 - int(percentage / 10))
             embed.add_field(name=f"{emoji} {data['text']}", value=f"`[{bar}] {percentage:.1f}% ({votes_count} votos)`", inline=False)
-
+        
+        embed.set_footer(text=f"Máximo de {poll['max_votes']} votos por pessoa.")
         await message.edit(embed=embed)
 
     @commands.Cog.listener()
