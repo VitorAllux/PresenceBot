@@ -128,6 +128,23 @@ class Music(commands.Cog):
         else:
             await ctx.send("❌ `BOT`: Índice inválido!")
 
+    @commands.command(name="join")
+    async def join(self, ctx):
+        await ctx.message.delete()
+
+        if ctx.author.voice:
+            loading_message = await ctx.send("🤖 `BOT`: Conectando ao canal de voz... ⏳")
+
+            try:
+                vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+                await loading_message.edit(content="🎵 `BOT`: Conectado ao canal de voz!")
+            except Exception as e:
+                await loading_message.edit(content=f"❌ `BOT`: Erro ao conectar: `{e}`")
+                print(f"❌ Erro ao conectar ao canal de voz: {e}")
+
+        else:
+            await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
+
     @commands.command(name="leave")
     async def leave(self, ctx):
         await ctx.message.delete()
