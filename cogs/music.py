@@ -41,12 +41,9 @@ class Music(commands.Cog):
         loading_message = await ctx.send("🔎 `BOT`: Buscando música... ⏳")
         print(f"🔎 Buscando música: {search}")
 
-        try:
-            tracks = await wavelink.YouTubeTrack.search(search)
-            print(f"📝 Resultados da busca: {tracks}")
-        except Exception as e:
-            print(f"❌ Erro ao buscar música: {e}")
-            return await loading_message.edit(content=f"❌ `BOT`: Erro ao buscar música: {e}")
+
+        tracks = await wavelink.YouTubeTrack.search(search)
+        print(f"📝 Resultados da busca: {tracks}")
 
         if not tracks:
             print("❌ Nenhuma música encontrada.")
