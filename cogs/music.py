@@ -13,17 +13,14 @@ class Music(commands.Cog):
         print("🤖 Bot está pronto! Conectando ao Lavalink...")
 
         node = wavelink.Node(
-            uri=f"ws://{os.getenv('LAVALINK_HOST')}:{os.getenv('LAVALINK_PORT')}",
-            password=os.getenv('LAVALINK_PASSWORD'),
-            resume_key="my_bot",
-            user_id=self.bot.user.id
+            uri="wss://lavalink.devamop.in",
+            password="lava",
+            secure=True
         )
 
-        try:
-            await wavelink.Pool.connect(client=self.bot, nodes=[node])
-            print("✅ Conectado ao Lavalink com sucesso!")
-        except Exception as e:
-            print(f"❌ Erro ao conectar ao Lavalink: {e}")
+        await wavelink.Pool.connect(client=self.bot, nodes=[node])
+        print("✅ Conectado ao Lavalink com sucesso!")
+
 
     @commands.command(name="helpMusic")
     async def help_music(self, ctx):
