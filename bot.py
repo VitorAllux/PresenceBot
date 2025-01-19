@@ -27,10 +27,10 @@ async def connect_lavalink():
         try:
             await wavelink.NodePool.create_node(
                 bot=bot,
-                host="lavalink_v3_no_yt.muzykant.xyz",
+                host="lavalink_v3.muzykant.xyz",
                 port=443,
-                password="youshallnotpass",  # A senha correta deve ser usada aqui
-                https=True
+                password="youshallnotpass",  # Senha correta para o Lavalink
+                secure=True
             )
             print("✅ Conectado ao Lavalink com sucesso!")
         except Exception as e:
@@ -40,7 +40,7 @@ async def connect_lavalink():
 async def setup_hook():
     """ Chamado antes do bot ficar pronto """
     print("⚙️ Configurando o bot...")
-    await connect_lavalink()
+    await connect_lavalink()  # 🔥 Conecta ao Lavalink ANTES de carregar os cogs!
     await bot.load_extension("cogs.music")
     await bot.load_extension("cogs.presence")
 
