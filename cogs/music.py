@@ -9,7 +9,6 @@ class Music(commands.Cog):
         self.queue = []
 
     async def get_audio_source(self, url):
-        """Obtém a fonte de áudio para o YouTube usando yt-dlp e FFmpeg"""
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -20,7 +19,6 @@ class Music(commands.Cog):
             'outtmpl': 'downloads/%(id)s.%(ext)s',
             'quiet': True
         }
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['formats'][0]['url']
@@ -30,15 +28,11 @@ class Music(commands.Cog):
     async def play(self, ctx, *, search: str):
         if not ctx.author.voice:
             return await ctx.send("❌ `BOT`: Você precisa estar em um canal de voz!")
-
-        # Se o bot não estiver no canal de voz, tenta conectar
         if not ctx.voice_client:
             vc = await ctx.author.voice.channel.connect(cls=discord.VoiceClient)
         else:
             vc = ctx.voice_client
-
-        url = search  # Pode ser um link do YouTube ou o nome da música.
-        
+        url = search
         try:
             audio_source = await self.get_audio_source(url)
             vc.play(audio_source, after=lambda e: print(f'Error: {e}'))
@@ -48,7 +42,6 @@ class Music(commands.Cog):
 
     @commands.command(name="skip")
     async def skip(self, ctx):
-        """Pula a música atual"""
         vc = ctx.voice_client
         if vc and vc.is_playing():
             vc.stop()
@@ -58,7 +51,6 @@ class Music(commands.Cog):
 
     @commands.command(name="pause")
     async def pause(self, ctx):
-        """Pausa a música atual"""
         vc = ctx.voice_client
         if vc and vc.is_playing():
             vc.pause()
@@ -68,7 +60,6 @@ class Music(commands.Cog):
 
     @commands.command(name="resume")
     async def resume(self, ctx):
-        """Retoma a música que foi pausada"""
         vc = ctx.voice_client
         if vc and vc.is_paused():
             vc.resume()
@@ -78,16 +69,13 @@ class Music(commands.Cog):
 
     @commands.command(name="queue")
     async def show_queue(self, ctx):
-        """Mostra a fila de músicas"""
         if not self.queue:
             return await ctx.send("❌ `BOT`: A fila de músicas está vazia!")
-
         queue_text = "\n".join(f"🎶 {i+1}. {track}" for i, track in enumerate(self.queue))
         await ctx.send(f"🎵 `BOT`: ```📜 Fila de Músicas:\n{queue_text}```")
 
     @commands.command(name="leave")
     async def leave(self, ctx):
-        """Desconecta o bot do canal de voz"""
         if ctx.voice_client:
             await ctx.voice_client.disconnect()
             await ctx.send("👋 `BOT`: Desconectado do canal de voz.")

@@ -1,7 +1,6 @@
 import os
 import asyncio
 import discord
-import wavelink
 from discord.ext import commands
 from config.settings import load_env, BOT_PREFIX
 
@@ -18,26 +17,8 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
-async def connect_lavalink():
-    await asyncio.sleep(3)
-    print("🔌 Tentando conectar ao Lavalink...")
-
-    try:
-        node = wavelink.Node(
-            uri="wss://lavalink.alfari.id",
-            password="catfein"
-        )
-        await wavelink.Pool.connect(client=bot, nodes=[node])
-
-        print("✅ Conectado ao Lavalink com sucesso!")
-
-    except Exception as e:
-        print(f"❌ Erro ao conectar ao Lavalink: {e}")
-
 @bot.event
 async def setup_hook():
-    print("⚙️ Configurando o bot...")
-    await connect_lavalink()
     await bot.load_extension("cogs.music")
     await bot.load_extension("cogs.presence")
 
