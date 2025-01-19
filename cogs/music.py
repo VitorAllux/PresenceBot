@@ -88,8 +88,6 @@ class Music(commands.Cog):
             vc = ctx.voice_client
             logger.info(f"🎙️ Bot já conectado no canal: {vc.channel}")
 
-        loading_message = await ctx.send(f"⏳ `BOT`: Carregando **{search}**...")
-
         if vc.is_playing():
             logger.info(f"➕ Música já tocando. Adicionando {search} à fila.")
             self.queue.append(search)
