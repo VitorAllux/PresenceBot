@@ -25,7 +25,7 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        role = discord.utils.get(member.guild.roles, name="PÔNEI SELVAGEM")
+        role = discord.utils.find(lambda r: r.name.startswith("🦄 PÔNEI SELVAGEM"), member.guild.roles)
         if role:
             await member.add_roles(role)
 
@@ -63,7 +63,7 @@ class RoleManager(commands.Cog):
         selected_role_name = role_mapping.get(str(reaction.emoji))
         if not selected_role_name:
             return
-        selected_role = discord.utils.get(guild.roles, name=selected_role_name)
+        selected_role = discord.utils.find(lambda r: r.name.startswith(selected_role_name), guild.roles)
         if not selected_role:
             return
         previous_roles = [role for role in member.roles if any(role.name.startswith(r) for r in role_mapping.values())]
@@ -89,7 +89,7 @@ class RoleManager(commands.Cog):
         role_name = role_mapping.get(str(reaction.emoji))
         if not role_name:
             return
-        role = discord.utils.get(guild.roles, name=role_name)
+        role = discord.utils.find(lambda r: r.name.startswith(role_name), guild.roles)
         if role and role in member.roles:
             await member.remove_roles(role)
             try:
