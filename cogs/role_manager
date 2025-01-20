@@ -1,15 +1,27 @@
 import discord
 from discord.ext import commands
+import asyncpg
+import os
 
 class RoleManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db_url = os.getenv("DATABASE_URL")
         self.role_message_id = None
-        self.role_mapping = {
-            "🛡️": ("Tank", discord.Color.blue()),
-            "⚔️": ("DPS", discord.Color.red()),
-            "💚": ("Healer", discord.Color.green())
-        }
+
+    async def fetch_role_message_id(self):
+        async with asyncpg.create_pool(self.db_url) as pool:
+            async with pool.acquire() as conn:
+                row = await conn.fetchrow("SELECT role_message_id FROM role_manager LIMIT 1;")
+                if row:
+                    self.role_message_id = row["role_message_id"]
+
+    async def save_role_message_id(self, message_id):
+        async with asyncpg.create_pool(self.db_url) as pool:
+            async with pool.acquire() as conn:
+                await conn.execute("DELETE FROM role_manager;")
+                await conn.execute("INSERT INTO role_manager (role_message_id) VALUES ($1)", message_id)
+        self.role_message_id = message_id
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -19,6 +31,11 @@ class RoleManager(commands.Cog):
 
     @commands.command(name="createRoleMessage")
     async def create_role_message(self, ctx):
+        await self.fetch_role_message_id()
+        if self.role_message_id:
+            await ctx.send("A mensagem de seleção de cargos já foi criada.")
+            return
+
         embed = discord.Embed(
             title="🎭 Escolha seu papel no servidor!",
             description=(
@@ -31,27 +48,25 @@ class RoleManager(commands.Cog):
             color=discord.Color.blue()
         )
         message = await ctx.send(embed=embed)
-        for emoji in self.role_mapping.keys():
+        for emoji in ["🛡️", "⚔️", "💚"]:
             await message.add_reaction(emoji)
-        self.role_message_id = message.id
+        await self.save_role_message_id(message.id)
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
+        await self.fetch_role_message_id()
         if user.bot or reaction.message.id != self.role_message_id:
             return
         guild = reaction.message.guild
         member = guild.get_member(user.id)
-        if not member:
-            return
-        selected_role_name = self.role_mapping.get(str(reaction.emoji), (None, None))[0]
+        role_mapping = {"🛡️": "Tank", "⚔️": "DPS", "💚": "Healer"}
+        selected_role_name = role_mapping.get(str(reaction.emoji))
         if not selected_role_name:
-            await user.send("🚫 Cargo inválido! Escolha apenas uma das reações disponíveis.")
             return
         selected_role = discord.utils.get(guild.roles, name=selected_role_name)
         if not selected_role:
-            await user.send("❌ O cargo associado a essa reação não existe no servidor!")
             return
-        previous_roles = [role for role in member.roles if role.name in [r[0] for r in self.role_mapping.values()]]
+        previous_roles = [role for role in member.roles if role.name in role_mapping.values()]
         for role in previous_roles:
             await member.remove_roles(role)
         await member.add_roles(selected_role)
@@ -62,13 +77,13 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
+        await self.fetch_role_message_id()
         if user.bot or reaction.message.id != self.role_message_id:
             return
         guild = reaction.message.guild
         member = guild.get_member(user.id)
-        if not member:
-            return
-        role_name = self.role_mapping.get(str(reaction.emoji), (None, None))[0]
+        role_mapping = {"🛡️": "Tank", "⚔️": "DPS", "💚": "Healer"}
+        role_name = role_mapping.get(str(reaction.emoji))
         if not role_name:
             return
         role = discord.utils.get(guild.roles, name=role_name)
