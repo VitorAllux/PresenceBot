@@ -22,6 +22,7 @@ async def setup_hook():
     await bot.load_extension("cogs.music")
     await bot.load_extension("cogs.presence")
     await bot.load_extension("cogs.poll")
+    await bot.load_extension("cogs.role_manager")
 
 @bot.event
 async def on_ready():

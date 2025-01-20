@@ -1,0 +1,83 @@
+import discord
+from discord.ext import commands
+
+class RoleManager(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.role_message_id = None
+        self.role_mapping = {
+            "🛡️": ("Tank", discord.Color.blue()),
+            "⚔️": ("DPS", discord.Color.red()),
+            "💚": ("Healer", discord.Color.green())
+        }
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        role = discord.utils.get(member.guild.roles, name="Pônei Selvagem")
+        if role:
+            await member.add_roles(role)
+
+    @commands.command(name="createRoleMessage")
+    async def create_role_message(self, ctx):
+        embed = discord.Embed(
+            title="🎭 Escolha seu papel no servidor!",
+            description=(
+                "Reaja abaixo para escolher seu cargo:\n\n"
+                "🛡️ - Tank\n"
+                "⚔️ - DPS\n"
+                "💚 - Healer\n\n"
+                "Você só pode escolher **um** cargo!"
+            ),
+            color=discord.Color.blue()
+        )
+        message = await ctx.send(embed=embed)
+        for emoji in self.role_mapping.keys():
+            await message.add_reaction(emoji)
+        self.role_message_id = message.id
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        if user.bot or reaction.message.id != self.role_message_id:
+            return
+        guild = reaction.message.guild
+        member = guild.get_member(user.id)
+        if not member:
+            return
+        selected_role_name = self.role_mapping.get(str(reaction.emoji), (None, None))[0]
+        if not selected_role_name:
+            await user.send("🚫 Cargo inválido! Escolha apenas uma das reações disponíveis.")
+            return
+        selected_role = discord.utils.get(guild.roles, name=selected_role_name)
+        if not selected_role:
+            await user.send("❌ O cargo associado a essa reação não existe no servidor!")
+            return
+        previous_roles = [role for role in member.roles if role.name in [r[0] for r in self.role_mapping.values()]]
+        for role in previous_roles:
+            await member.remove_roles(role)
+        await member.add_roles(selected_role)
+        try:
+            await user.send(f"✅ Você agora faz parte do time **{selected_role_name}**!")
+        except discord.Forbidden:
+            pass
+
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        if user.bot or reaction.message.id != self.role_message_id:
+            return
+        guild = reaction.message.guild
+        member = guild.get_member(user.id)
+        if not member:
+            return
+        role_name = self.role_mapping.get(str(reaction.emoji), (None, None))[0]
+        if not role_name:
+            return
+        role = discord.utils.get(guild.roles, name=role_name)
+        if role and role in member.roles:
+            await member.remove_roles(role)
+            try:
+                await user.send(f"❌ Você **saiu** do cargo **{role_name}**.")
+            except discord.Forbidden:
+                pass
+
+async def setup(bot):
+    await bot.add_cog(RoleManager(bot))
