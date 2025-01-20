@@ -10,10 +10,6 @@ class Poll(commands.Cog):
 
     @commands.command(name="createPoll")
     async def create_poll(self, ctx, max_votes: str, title: str, *, options: str):
-        """
-        Cria uma enquete.
-        Uso: !createPoll <max_votos_por_pessoa> "Título da Enquete" "Opção 1, Opção 2, Opção 3"
-        """
         await ctx.message.delete()
 
         if not max_votes.isdigit():
@@ -55,51 +51,31 @@ class Poll(commands.Cog):
         poll_data["message"] = poll_message
         self.active_polls[poll_message.id] = poll_data
 
-    async def update_poll_message(self, message):
-        if message.id not in self.active_polls:
+    @commands.command(name="endPoll")
+    async def end_poll(self, ctx, message_id: int):
+        if message_id not in self.active_polls:
+            await ctx.send("❌ `BOT`: ID de enquete inválido!")
             return
 
-        poll = self.active_polls[message.id]
+        poll = self.active_polls.pop(message_id)
         total_votes = sum(len(opt["votes"]) for opt in poll["options"].values())
-        embed = discord.Embed(title=f"📊 **{poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.gold())
+        embed = discord.Embed(title=f"📊 **{poll['title']} - ENCERRADO**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.red())
 
         for emoji, data in poll["options"].items():
             votes_count = len(data["votes"])
             percentage = (votes_count / total_votes * 100) if total_votes > 0 else 0
             bar = "🟩" * int(percentage / 10) + "⬜" * (10 - int(percentage / 10))
             embed.add_field(name=f"{emoji} {data['text']}", value=f"`[{bar}] {percentage:.1f}% ({votes_count} votos)`", inline=False)
-        
-        embed.set_footer(text=f"Máximo de {poll['max_votes']} votos por pessoa.")
-        await message.edit(embed=embed)
 
-    @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
-        if user.bot or reaction.message.id not in self.active_polls:
-            return
+        await ctx.send(embed=embed)
 
-        poll = self.active_polls[reaction.message.id]
-        if reaction.emoji not in poll["options"]:
-            return
-
-        total_votes = sum(len(opt["votes"]) for opt in poll["options"].values() if user in opt["votes"])
-        if total_votes >= poll["max_votes"]:
-            await reaction.message.remove_reaction(reaction.emoji, user)
-            return
-
-        poll["options"][reaction.emoji]["votes"].add(user)
-        await self.update_poll_message(reaction.message)
-
-    @commands.Cog.listener()
-    async def on_reaction_remove(self, reaction, user):
-        if user.bot or reaction.message.id not in self.active_polls:
-            return
-
-        poll = self.active_polls[reaction.message.id]
-        if reaction.emoji not in poll["options"]:
-            return
-
-        poll["options"][reaction.emoji]["votes"].discard(user)
-        await self.update_poll_message(reaction.message)
+    @commands.command(name="helpPoll")
+    async def poll_help(self, ctx):
+        embed = discord.Embed(title="📊 **Comandos de Enquete**", color=discord.Color.blue())
+        embed.add_field(name="!createPoll <max_votos> \"Título\" \"Opção 1, Opção 2, ...\"", value="Cria uma nova enquete.", inline=False)
+        embed.add_field(name="!endPoll <id_mensagem>", value="Finaliza a enquete e mostra os resultados.", inline=False)
+        embed.add_field(name="!helpPoll", value="Mostra esta ajuda.", inline=False)
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Poll(bot))
