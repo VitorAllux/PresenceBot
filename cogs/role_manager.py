@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import asyncpg
 import os
+import re
 
 class RoleManager(commands.Cog):
     def __init__(self, bot):
@@ -25,7 +26,7 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        role = discord.utils.find(lambda r: "Pôneis Selvagens" in re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', r.name).upper(), member.guild.roles)
+        role = discord.utils.find(lambda r: "PÔNEIS SELVAGENS" in re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', r.name).upper(), member.guild.roles)
         if role:
             await member.add_roles(role)
 
@@ -40,9 +41,9 @@ class RoleManager(commands.Cog):
             title="🎭 Escolha seu papel no servidor!",
             description=(
                 "Reaja abaixo para escolher seu cargo:\n\n"
-                "🛡️ - 🛡️ TANK\n"
-                "⚔️ - ⚔️ DPS\n"
-                "💚 - 💚 HEALER\n\n"
+                "🛡️ - TANK\n"
+                "⚔️ - DPS\n"
+                "💚 - HEALER\n\n"
                 "Você só pode escolher **um** cargo!"
             ),
             color=discord.Color.blue()
@@ -59,14 +60,14 @@ class RoleManager(commands.Cog):
             return
         guild = reaction.message.guild
         member = guild.get_member(user.id)
-        role_mapping = {"🛡️": "🛡️ TANK", "⚔️": "⚔️ DPS", "💚": "💚 HEALER"}
+        role_mapping = {"🛡️": "TANK", "⚔️": "DPS", "💚": "HEALER"}
         selected_role_name = role_mapping.get(str(reaction.emoji))
         if not selected_role_name:
             return
-        selected_role = discord.utils.find(lambda r: r.name.startswith(selected_role_name), guild.roles)
+        selected_role = discord.utils.find(lambda r: selected_role_name in re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', r.name).upper(), guild.roles)
         if not selected_role:
             return
-        previous_roles = [role for role in member.roles if any(role.name.startswith(r) for r in role_mapping.values())]
+        previous_roles = [role for role in member.roles if any(role_name in re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', role.name).upper() for role_name in role_mapping.values())]
         for role in previous_roles:
             await member.remove_roles(role)
         await member.add_roles(selected_role)
@@ -85,11 +86,11 @@ class RoleManager(commands.Cog):
             return
         guild = reaction.message.guild
         member = guild.get_member(user.id)
-        role_mapping = {"🛡️": "🛡️ TANK", "⚔️": "⚔️ DPS", "💚": "💚 HEALER"}
+        role_mapping = {"🛡️": "TANK", "⚔️": "DPS", "💚": "HEALER"}
         role_name = role_mapping.get(str(reaction.emoji))
         if not role_name:
             return
-        role = discord.utils.find(lambda r: r.name.startswith(role_name), guild.roles)
+        role = discord.utils.find(lambda r: role_name in re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', r.name).upper(), guild.roles)
         if role and role in member.roles:
             await member.remove_roles(role)
             try:
