@@ -25,7 +25,7 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        role = discord.utils.get(member.guild.roles, name="Pônei Selvagem")
+        role = discord.utils.get(member.guild.roles, name="PÔNEI SELVAGEM")
         if role:
             await member.add_roles(role)
 
@@ -40,9 +40,9 @@ class RoleManager(commands.Cog):
             title="🎭 Escolha seu papel no servidor!",
             description=(
                 "Reaja abaixo para escolher seu cargo:\n\n"
-                "🛡️ - Tank\n"
-                "⚔️ - DPS\n"
-                "💚 - Healer\n\n"
+                "🛡️ - 🛡️ TANK\n"
+                "⚔️ - ⚔️ DPS\n"
+                "💚 - 💚 HEALER\n\n"
                 "Você só pode escolher **um** cargo!"
             ),
             color=discord.Color.blue()
@@ -59,14 +59,14 @@ class RoleManager(commands.Cog):
             return
         guild = reaction.message.guild
         member = guild.get_member(user.id)
-        role_mapping = {"🛡️": "Tank", "⚔️": "DPS", "💚": "Healer"}
+        role_mapping = {"🛡️": "🛡️ TANK", "⚔️": "⚔️ DPS", "💚": "💚 HEALER"}
         selected_role_name = role_mapping.get(str(reaction.emoji))
         if not selected_role_name:
             return
         selected_role = discord.utils.get(guild.roles, name=selected_role_name)
         if not selected_role:
             return
-        previous_roles = [role for role in member.roles if role.name in role_mapping.values()]
+        previous_roles = [role for role in member.roles if any(role.name.startswith(r) for r in role_mapping.values())]
         for role in previous_roles:
             await member.remove_roles(role)
         await member.add_roles(selected_role)
@@ -74,6 +74,9 @@ class RoleManager(commands.Cog):
             await user.send(f"✅ Você agora faz parte do time **{selected_role_name}**!")
         except discord.Forbidden:
             pass
+        for emoji, role_name in role_mapping.items():
+            if emoji != reaction.emoji:
+                await reaction.message.remove_reaction(emoji, user)
 
     @commands.Cog.listener()
     async def on_reaction_remove(self, reaction, user):
@@ -82,7 +85,7 @@ class RoleManager(commands.Cog):
             return
         guild = reaction.message.guild
         member = guild.get_member(user.id)
-        role_mapping = {"🛡️": "Tank", "⚔️": "DPS", "💚": "Healer"}
+        role_mapping = {"🛡️": "🛡️ TANK", "⚔️": "⚔️ DPS", "💚": "💚 HEALER"}
         role_name = role_mapping.get(str(reaction.emoji))
         if not role_name:
             return

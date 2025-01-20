@@ -70,6 +70,8 @@ class Poll(commands.Cog):
 
     @commands.command(name="endPoll")
     async def end_poll(self, ctx):
+        await ctx.message.delete()
+
         for poll_id, poll in list(self.active_polls.items()):
             if poll["author"] == ctx.author:
                 embed = discord.Embed(title=f"📊 **Enquete Finalizada: {poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.red())
@@ -84,6 +86,8 @@ class Poll(commands.Cog):
 
     @commands.command(name="helpPoll")
     async def help_poll(self, ctx):
+        await ctx.message.delete()
+        
         help_text = (
             "```📊 Comandos de Enquete\n"
             "!createPoll <max_votos> \"Título\" \"Opção 1, Opção 2, Opção 3\" - Cria uma enquete.\n"
