@@ -25,7 +25,7 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        role = discord.utils.find(lambda r: r.name.startswith("🦄 PÔNEI SELVAGEM"), member.guild.roles)
+        role = discord.utils.find(lambda r: "Pôneis Selvagens" in re.sub(r'[^a-zA-ZÀ-ÿ\s]', '', r.name).upper(), member.guild.roles)
         if role:
             await member.add_roles(role)
 
