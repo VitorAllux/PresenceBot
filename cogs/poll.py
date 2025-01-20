@@ -10,10 +10,6 @@ class Poll(commands.Cog):
 
     @commands.command(name="createPoll")
     async def create_poll(self, ctx, max_votes: str, title: str, *, options: str):
-        """
-        Cria uma enquete.
-        Uso: !createPoll <max_votos_por_pessoa> "Título da Enquete" "Opção 1, Opção 2, Opção 3"
-        """
         await ctx.message.delete()
 
         if not max_votes.isdigit():
@@ -72,20 +68,41 @@ class Poll(commands.Cog):
         embed.set_footer(text=f"Máximo de {poll['max_votes']} votos por pessoa.")
         await message.edit(embed=embed)
 
+    @commands.command(name="endPoll")
+    async def end_poll(self, ctx):
+        for poll_id, poll in list(self.active_polls.items()):
+            if poll["author"] == ctx.author:
+                embed = discord.Embed(title=f"📊 **Enquete Finalizada: {poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.red())
+                for emoji, data in poll["options"].items():
+                    votes_count = len(data["votes"])
+                    embed.add_field(name=f"{emoji} {data['text']}", value=f"`{votes_count} votos`", inline=False)
+                await poll["message"].edit(embed=embed)
+                del self.active_polls[poll_id]
+                await ctx.send("✅ `BOT`: Enquete finalizada com sucesso!")
+                return
+        await ctx.send("❌ `BOT`: Você não tem enquetes ativas para finalizar!")
+
+    @commands.command(name="helpPoll")
+    async def help_poll(self, ctx):
+        help_text = (
+            "```📊 Comandos de Enquete\n"
+            "!createPoll <max_votos> \"Título\" \"Opção 1, Opção 2, Opção 3\" - Cria uma enquete.\n"
+            "!endPoll - Finaliza sua enquete ativa.\n"
+            "```"
+        )
+        await ctx.send(help_text)
+
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         if user.bot or reaction.message.id not in self.active_polls:
             return
-
         poll = self.active_polls[reaction.message.id]
         if reaction.emoji not in poll["options"]:
             return
-
         total_votes = sum(len(opt["votes"]) for opt in poll["options"].values() if user in opt["votes"])
         if total_votes >= poll["max_votes"]:
             await reaction.message.remove_reaction(reaction.emoji, user)
             return
-
         poll["options"][reaction.emoji]["votes"].add(user)
         await self.update_poll_message(reaction.message)
 
@@ -93,11 +110,9 @@ class Poll(commands.Cog):
     async def on_reaction_remove(self, reaction, user):
         if user.bot or reaction.message.id not in self.active_polls:
             return
-
         poll = self.active_polls[reaction.message.id]
         if reaction.emoji not in poll["options"]:
             return
-
         poll["options"][reaction.emoji]["votes"].discard(user)
         await self.update_poll_message(reaction.message)
 
