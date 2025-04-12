@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from discord.ext import commands
 from services.poll_storage import PollStorage
 
@@ -24,15 +25,18 @@ class Poll(commands.Cog):
             guild = self.bot.get_guild(p["guild_id"])
             if not guild:
                 continue
+
             channel = guild.get_channel(p["channel_id"])
             if not channel:
                 continue
+
             try:
                 msg = await channel.fetch_message(p["message_id"])
             except discord.NotFound:
                 continue
 
             author = guild.get_member(p["author_id"]) or await self.bot.fetch_user(p["author_id"])
+
             poll = {
                 "author": author,
                 "title": p["title"],
@@ -72,18 +76,24 @@ class Poll(commands.Cog):
             "message": None
         }
 
-        embed = discord.Embed(title=f"📊 **{title}**", description=f"Criado por {ctx.author.display_name}\n\n", color=discord.Color.gold())
+        embed = discord.Embed(
+            title=f"📊 **{title}**",
+            description=f"Criado por {ctx.author.display_name}\n\n",
+            color=discord.Color.gold()
+        )
+
         for i, opt in enumerate(options_list):
-            embed.add_field(name=f"{REACTIONS[i]} {opt}", value="`[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0% (0 votos)`", inline=False)
+            embed.add_field(
+                name=f"{REACTIONS[i]} {opt}",
+                value="`[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0% (0 votos)`",
+                inline=False
+            )
+
         embed.set_footer(text=f"Máximo de {max_votes} votos por pessoa. Reaja para votar!")
 
         msg = await ctx.send(embed=embed)
-        for i in range(len(options_list)):
-            await msg.add_reaction(REACTIONS[i])
 
-        poll["message"] = msg
-        self.active_polls[msg.id] = poll
-
+        # Salva a enquete no banco antes de adicionar reações
         await self.storage.create_poll({
             "message_id": msg.id,
             "channel_id": msg.channel.id,
@@ -94,14 +104,27 @@ class Poll(commands.Cog):
             "max_votes": max_votes
         })
 
+        for i in range(len(options_list)):
+            await msg.add_reaction(REACTIONS[i])
+
+        poll["message"] = msg
+        self.active_polls[msg.id] = poll
+
     @commands.command(name="endPoll")
     async def end_poll(self, ctx, message_id: int = None):
         await ctx.message.delete()
+
         for pid, poll in list(self.active_polls.items()):
             if poll["author"] == ctx.author and (message_id is None or pid == message_id):
-                embed = discord.Embed(title=f"📊 **Enquete Finalizada: {poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.red())
+                embed = discord.Embed(
+                    title=f"📊 **Enquete Finalizada: {poll['title']}**",
+                    description=f"Criado por {poll['author'].display_name}\n\n",
+                    color=discord.Color.red()
+                )
+
                 for emoji, data in poll["options"].items():
                     embed.add_field(name=f"{emoji} {data['text']}", value=f"`{len(data['votes'])} votos`", inline=False)
+
                 await poll["message"].edit(embed=embed)
                 await ctx.send("✅ `BOT`: Enquete finalizada!")
                 del self.active_polls[pid]
@@ -118,7 +141,12 @@ class Poll(commands.Cog):
     async def update_poll_message(self, message):
         poll = self.active_polls[message.id]
         total = sum(len(o["votes"]) for o in poll["options"].values())
-        embed = discord.Embed(title=f"📊 **{poll['title']}**", description=f"Criado por {poll['author'].display_name}\n\n", color=discord.Color.gold())
+
+        embed = discord.Embed(
+            title=f"📊 **{poll['title']}**",
+            description=f"Criado por {poll['author'].display_name}\n\n",
+            color=discord.Color.gold()
+        )
 
         for emoji, data in poll["options"].items():
             votes = len(data["votes"])
@@ -138,7 +166,7 @@ class Poll(commands.Cog):
         if reaction.emoji not in poll["options"]:
             return
 
-        user_votes = sum(1 for o in poll["options"].values() if user in o["votes"])
+        user_votes = sum(1 for opt in poll["options"].values() if user in opt["votes"])
         if user_votes >= poll["max_votes"]:
             await reaction.message.remove_reaction(reaction.emoji, user)
             return
