@@ -93,14 +93,14 @@ class Poll(commands.Cog):
 
         msg = await ctx.send(embed=embed)
 
-        # Salva a enquete no banco antes de adicionar reações
+        # Salva a enquete no banco antes de adicionar reações (corrigido aqui)
         await self.storage.create_poll({
             "message_id": msg.id,
             "channel_id": msg.channel.id,
             "guild_id": msg.guild.id,
             "author_id": ctx.author.id,
             "title": title,
-            "options": {e: d["text"] for e, d in poll["options"].items()},
+            "options": {e: {"text": d["text"], "votes": []} for e, d in poll["options"].items()},
             "max_votes": max_votes
         })
 
