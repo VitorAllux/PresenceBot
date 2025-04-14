@@ -3,7 +3,7 @@ import os
 
 class TlMarketAPI:
     def __init__(self):
-        self.base_url = "https://developers.plaync.com/tl-market"
+        self.base_url = "https://developers.plaync.com/market"
         self.key = os.getenv("TLMARKET_API_KEY")
 
     async def get_servers(self):
