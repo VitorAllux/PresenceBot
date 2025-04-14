@@ -22,10 +22,11 @@ async def setup_hook():
     await bot.load_extension("cogs.music")
     await bot.load_extension("cogs.presence")
     await bot.load_extension("cogs.poll")
+    await bot.load_extension("cogs.tl_market")
 
 @bot.event
 async def on_ready():
-    print(f"🤖 Bot {bot.user} está online e pronto para gerenciar enquetes, presenças e músicas!")
+    print(f"🤖 Bot {bot.user} está online e pronto para gerenciar enquetes, presenças, músicas e Lineage 2M!")
 
 async def main():
     await bot.start(TOKEN)
