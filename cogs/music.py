@@ -123,13 +123,6 @@ class Music(commands.Cog):
                 "❌ Não estou conectado a nenhum canal.", ephemeral=True
             )
 
-    async def cog_load(self):
-        self.bot.tree.add_command(self.play)
-        self.bot.tree.add_command(self.skip)
-        self.bot.tree.add_command(self.pause)
-        self.bot.tree.add_command(self.resume)
-        self.bot.tree.add_command(self.leave)
-
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
