@@ -18,35 +18,34 @@ class Music(commands.Cog):
         self.current_song = None
         self.current_message = None
 
-
-async def get_audio_source(self, query):
-    logger.info(f"🔍 Buscando áudio para: {query}")
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "noplaylist": True,
-        "quiet": False,
-        "default_search": "ytsearch1",
-        "extract_flat": False,
-        "cookiefile": "config/cookies.txt",
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            info = ydl.extract_info(query, download=False)
-            if "entries" in info:
-                info = info["entries"][0]
-            video_url = info["webpage_url"]
-            formats = [
-                fmt["url"]
-                for fmt in info.get("formats", [])
-                if fmt.get("acodec") != "none"
-            ]
-            if not formats:
-                raise Exception("Nenhum formato de áudio válido encontrado.")
-            logger.info(f"🎶 Música encontrada: {info['title']} ({video_url})")
-            return FFmpegPCMAudio(formats[0]), info["title"], video_url
-        except Exception as e:
-            logger.error(f"❌ Erro ao obter áudio: {e}")
-            raise
+    async def get_audio_source(self, query):
+        logger.info(f"🔍 Buscando áudio para: {query}")
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "noplaylist": True,
+            "quiet": False,
+            "default_search": "ytsearch1",
+            "extract_flat": False,
+            "cookiefile": "config/cookies.txt",  # cookies salvos do navegador
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                info = ydl.extract_info(query, download=False)
+                if "entries" in info:
+                    info = info["entries"][0]
+                video_url = info["webpage_url"]
+                formats = [
+                    fmt["url"]
+                    for fmt in info.get("formats", [])
+                    if fmt.get("acodec") != "none"
+                ]
+                if not formats:
+                    raise Exception("Nenhum formato de áudio válido encontrado.")
+                logger.info(f"🎶 Música encontrada: {info['title']} ({video_url})")
+                return FFmpegPCMAudio(formats[0]), info["title"], video_url
+            except Exception as e:
+                logger.error(f"❌ Erro ao obter áudio: {e}")
+                raise
 
     async def play_next(self, ctx):
         logger.info(f"⏭ Tocando próxima música. Fila: {self.queue}")
