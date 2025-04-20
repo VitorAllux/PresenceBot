@@ -30,10 +30,14 @@ class Storage:
             async with pool.acquire() as conn:
                 rows = await conn.fetch(query, cutoff)
                 return [
-                    {"id": row["id"], "timestamp": row["timestamp"], "participant": row["participant"]}
+                    {
+                        "id": row["id"],
+                        "timestamp": row["timestamp"],
+                        "participant": row["participant"],
+                    }
                     for row in rows
                 ]
-            
+
     async def get_all_presences(self):
         query = """
         SELECT id, timestamp, participant
@@ -44,7 +48,10 @@ class Storage:
             async with pool.acquire() as conn:
                 rows = await conn.fetch(query)
                 return [
-                    {"id": row["id"], "timestamp": row["timestamp"], "participant": row["participant"]}
+                    {
+                        "id": row["id"],
+                        "timestamp": row["timestamp"],
+                        "participant": row["participant"],
+                    }
                     for row in rows
                 ]
-
