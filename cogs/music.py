@@ -15,48 +15,61 @@ class Music(commands.Cog):
         self.current_song = None
         self.current_message = None
 
+    async def get_audio_sources(self, query):
+        logger.info(f"🔍 Buscando áudio para: {query}")
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "noplaylist": False,
+            "quiet": True,
+            "default_search": "ytsearch1",
+            "extract_flat": False,
+            "cookiefile": "config/cookies.txt",
+        }
 
-async def get_audio_source(self, query):
-    logger.info(f"🔍 Buscando áudio para: {query}")
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "noplaylist": True,
-        "quiet": False,
-        "default_search": "ytsearch1",
-        "extract_flat": False,
-        "cookiefile": "config/cookies.txt",
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            info = ydl.extract_info(query, download=False)
-            if "entries" in info:
-                info = info["entries"][0]
-            video_url = info["webpage_url"]
-            formats = [
-                fmt["url"]
-                for fmt in info.get("formats", [])
-                if fmt.get("acodec") != "none"
-            ]
-            if not formats:
-                raise Exception("Nenhum formato de áudio válido encontrado.")
-            logger.info(f"🎶 Música encontrada: {info['title']} ({video_url})")
-            return FFmpegPCMAudio(formats[0]), info["title"], video_url
-        except Exception as e:
-            logger.error(f"❌ Erro ao obter áudio: {e}")
-            raise
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                info = ydl.extract_info(query, download=False)
+
+                if "entries" in info:
+                    entries = info["entries"]
+                else:
+                    entries = [info]
+
+                sources = []
+                for entry in entries:
+                    formats = [
+                        f["url"]
+                        for f in entry.get("formats", [])
+                        if f.get("acodec") != "none"
+                    ]
+                    if not formats:
+                        continue
+                    sources.append(
+                        {
+                            "audio": FFmpegPCMAudio(formats[0]),
+                            "title": entry["title"],
+                            "url": entry["webpage_url"],
+                        }
+                    )
+
+                if not sources:
+                    raise Exception("Nenhum áudio válido encontrado.")
+                return sources
+            except Exception as e:
+                logger.error(f"❌ Erro ao obter áudio: {e}")
+                raise
 
     async def play_next(self, interaction, vc):
         if self.queue:
             next_song = self.queue.pop(0)
             self.current_song = next_song
-            audio_source, title, video_url = await self.get_audio_source(next_song)
             if self.current_message:
                 await self.current_message.delete()
             self.current_message = await interaction.channel.send(
-                f"🎶 Tocando agora: [{title}]({video_url})"
+                f"🎶 Tocando agora: [{next_song['title']}]({next_song['url']})"
             )
             vc.play(
-                audio_source,
+                next_song["audio"],
                 after=lambda e: self.bot.loop.create_task(
                     self.play_next(interaction, vc)
                 ),
@@ -67,25 +80,38 @@ async def get_audio_source(self, query):
             if vc.is_connected():
                 await vc.disconnect()
 
-    @app_commands.command(name="play", description="Tocar música")
-    @app_commands.describe(search="Nome ou link da música")
+    @app_commands.command(name="play", description="Tocar música ou playlist")
+    @app_commands.describe(search="Nome ou link da música ou playlist")
     async def play(self, interaction: discord.Interaction, search: str):
         if not interaction.user.voice:
             await interaction.response.send_message(
                 "❌ Você precisa estar em um canal de voz!", ephemeral=True
             )
             return
+
         if not interaction.guild.voice_client:
             vc = await interaction.user.voice.channel.connect()
         else:
             vc = interaction.guild.voice_client
-        self.queue.append(search)
+
+        await interaction.response.defer()
+        try:
+            songs = await self.get_audio_sources(search)
+        except Exception as e:
+            await interaction.followup.send(f"❌ Erro: {e}")
+            return
+
+        self.queue.extend(songs)
         if vc.is_playing():
-            await interaction.response.send_message(
-                f"➕ Adicionado à fila: **{search}**"
-            )
+            if len(songs) == 1:
+                await interaction.followup.send(
+                    f"➕ Adicionado à fila: **{songs[0]['title']}**"
+                )
+            else:
+                await interaction.followup.send(
+                    f"➕ {len(songs)} músicas adicionadas à fila."
+                )
         else:
-            await interaction.response.defer()
             await self.play_next(interaction, vc)
 
     @app_commands.command(name="skip", description="Pular música atual")
@@ -131,6 +157,18 @@ async def get_audio_source(self, query):
             await interaction.response.send_message(
                 "❌ Não estou conectado a nenhum canal.", ephemeral=True
             )
+
+    @app_commands.command(name="queue", description="Ver fila de músicas")
+    async def show_queue(self, interaction: discord.Interaction):
+        if not self.queue:
+            await interaction.response.send_message("📭 Fila vazia.")
+            return
+        lines = [
+            f"{i+1}. [{song['title']}]({song['url']})"
+            for i, song in enumerate(self.queue[:10])
+        ]
+        msg = "\n".join(lines)
+        await interaction.response.send_message(f"🎵 Fila atual:\n{msg}")
 
 
 async def setup(bot):
